@@ -1,0 +1,37 @@
+{
+  "name": "nekotask-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NekoTask Studio — productividad, hábitos e hidratación con Blanquita, Bizca, Mango y Ronro",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "vista-previa": "node scripts/vista-previa/construir.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
+    "@google/genai": "^2.30.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "framer-motion": "^11.11.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "web-push": "^3.6.7",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/web-push": "^3.6.4",
+    "autoprefixer": "^10.4.20",
+    "esbuild": "^0.24.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.0"
+  }
+}
