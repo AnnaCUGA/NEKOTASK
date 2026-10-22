@@ -2,7 +2,7 @@
  * - Funciona sin internet: guarda la app y abre la última versión conocida.
  * - Recibe notificaciones push con los recordatorios de las gatitas.
  */
-const VERSION = "neko-v1";
+const VERSION = "neko-v2"; // súbela cuando cambien íconos o sprites para que el celular los renueve
 const ESTATICOS = `${VERSION}-estaticos`;
 const PAGINAS = `${VERSION}-paginas`;
 const INICIO = ["/", "/manifest.webmanifest", "/iconos/icono-192.png", "/iconos/insignia-96.png"];

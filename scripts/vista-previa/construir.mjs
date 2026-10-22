@@ -32,6 +32,11 @@ const resultado = await build({
 });
 
 const js = resultado.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
+// sprites de las gatitas incrustados (en la app se sirven desde /sprites)
+const sprites = Object.fromEntries(
+  ["blanquita", "bizca", "mango", "ronro"].map((g) => [g, `data:image/webp;base64,${readFileSync(resolve(raiz, `public/sprites/${g}.webp`)).toString("base64")}`]),
+);
+const scriptSprites = `<script>window.__NEKO_SPRITES=${JSON.stringify(sprites)};</script>`;
 const css = readFileSync(resolve(dist, "vista.css"), "utf8");
 
 const html = `<!doctype html>
@@ -49,6 +54,7 @@ const html = `<!doctype html>
 </head>
 <body>
 <div id="raiz"></div>
+${scriptSprites}
 <script>${js}</script>
 </body>
 </html>`;
@@ -63,6 +69,7 @@ ${fuentes}
 <style>:root{--font-titulo:'Fredoka',system-ui,sans-serif;--font-cuerpo:'Nunito',system-ui,sans-serif;color-scheme:dark}body{background:#121212;color:#f4f1fa}</style>
 <style>${css}</style>
 <div id="raiz"></div>
+${scriptSprites}
 <script>${js}</script>`;
 writeFileSync(resolve(dist, "nekotask-studio.html"), artifact);
 console.log(`Vista previa lista: dist/nekotask-vista-previa.html (${(html.length / 1024).toFixed(0)} KB)`);
