@@ -117,7 +117,6 @@ function ItemTarea({ tarea }: { tarea: Tarea }) {
 
   return (
     <motion.li
-      layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 40 }}
