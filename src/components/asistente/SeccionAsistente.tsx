@@ -26,7 +26,6 @@ const CARA: Record<EstadoBlanquita, { expresion: Expresion; cabeza: MovCabeza }>
 export function SeccionAsistente() {
   const conversaciones = useNekoStore((s) => s.conversaciones);
   const proveedor = useNekoStore((s) => s.ajustes.proveedorIa);
-  const accesorio = useNekoStore((s) => s.gatitas.find((g) => g.clave === "blanquita")?.accesorio);
   const ajustar = useNekoStore((s) => s.actualizarAjustes);
   const { crearConversacion, agregarMensaje, actualizarMensaje } = useNekoStore.getState();
 
@@ -123,7 +122,7 @@ export function SeccionAsistente() {
         {/* cabecera con Blanquita */}
         <header className="flex flex-wrap items-end gap-3 border-b border-noche-600 px-4 pb-3 pt-3">
           <div className="relative -mb-3 shrink-0">
-            <Gatita clave="blanquita" pose="sentada" expresion={CARA[estado].expresion} cabeza={CARA[estado].cabeza} accesorio={accesorio} ancho={86} />
+            <Gatita clave="blanquita" pose="sentada" expresion={CARA[estado].expresion} cabeza={CARA[estado].cabeza} ancho={86} />
           </div>
           <div className="min-w-0 flex-1 pb-1">
             <p className="font-titulo text-xl font-semibold text-white">Blanquita</p>
@@ -387,11 +386,12 @@ function NotasGuardadas() {
   const eliminar = useNekoStore((s) => s.eliminarNota);
   const fijar = useNekoStore((s) => s.alternarFijada);
   const [abierta, setAbierta] = useState<string | null>(null);
-  const ordenadas = [...notas].sort((a, b) => Number(b.fijada) - Number(a.fijada) || b.creadoEn.localeCompare(a.creadoEn));
+  const ordenadas = [...notas].sort((a, b) => Number(b.fijada) - Number(a.fijada) || b.creadoEn.localeCompare(a.creadoEn)).slice(0, 6);
   return (
     <div className="rounded-[22px] border border-noche-600 bg-noche-800/90 p-3">
-      <p className="mb-2 flex items-center gap-1.5 px-1 font-titulo text-sm font-semibold text-white"><IconoNeko nombre="nota" tamano={15} className="text-croqueta" /> Notas guardadas</p>
+      <p className="mb-2 flex items-center gap-1.5 px-1 font-titulo text-sm font-semibold text-white"><IconoNeko nombre="nota" tamano={15} className="text-croqueta" /> Notas recientes</p>
       {ordenadas.length === 0 && <p className="px-1 text-xs text-white/45">Toca "Guardar como nota" en una respuesta para tenerla aquí.</p>}
+      {ordenadas.length > 0 && <p className="mb-1.5 px-1 text-[11px] text-white/40">Todas están en Organizar → Notas.</p>}
       <ul className="max-h-[320px] space-y-1.5 overflow-y-auto">
         {ordenadas.map((n) => (
           <li key={n.id} className="rounded-xl border border-noche-600 bg-noche-700/50">

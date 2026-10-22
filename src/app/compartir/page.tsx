@@ -53,9 +53,9 @@ export default function Compartir() {
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-violeta py-2.5 font-semibold text-noche disabled:bg-noche-600 disabled:text-white/60">
                 <IconoNeko nombre={tarea ? "check" : "tarea"} tamano={18} /> {tarea ? "También es una tarea" : "Convertir también en tarea"}
               </button>
-              <a href="/?seccion=asistente" className="block w-full rounded-xl border border-noche-600 py-2.5 font-semibold text-white/80">Abrir NekoTask</a>
+              <a href="/?seccion=notas" className="block w-full rounded-xl border border-noche-600 py-2.5 font-semibold text-white/80">Abrir NekoTask</a>
             </div>
-            <p className="mt-3 text-[11px] text-white/40">Tus notas están en la sección Blanquita, en "Notas guardadas".</p>
+            <p className="mt-3 text-[11px] text-white/40">Tus notas están en Organizar → Notas.</p>
           </>
         ) : (
           <>

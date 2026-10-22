@@ -8,6 +8,7 @@ import { IconoNeko } from "@/components/iconos/IconoNeko";
 import { BotonIcono } from "@/components/ui/Panel";
 import { confetiDesde } from "@/lib/eventos";
 import { formatoDuracion, formatoHora, hoyISO, mayusculaInicial } from "@/lib/fechas";
+import { ocurrenciasEntre, tituloFecha } from "@/lib/fechasImportantes";
 import {
   conectarGoogle, consultarEstadoGoogle, crearEnGoogle, desconectarGoogle, eliminarEnGoogle, ES_VISTA_PREVIA,
   sincronizarRango, type EstadoGoogle,
@@ -28,7 +29,7 @@ const HORA_FIN = 24;
 const PX_HORA = 46;
 
 // ─── Elementos que se dibujan en el calendario ─────────────────────────
-type TipoItem = "local" | "google" | "ejemplo" | "tarea" | "cita" | "pomodoro";
+type TipoItem = "local" | "google" | "ejemplo" | "tarea" | "cita" | "fecha" | "pomodoro";
 interface Item {
   id: string;
   ref: string;
@@ -47,6 +48,7 @@ const ESTILO: Record<TipoItem, { color: string; nombre: string; icono: NombreIco
   ejemplo: { color: "#8b86a3", nombre: "Ejemplo", icono: "calendario" },
   tarea: { color: "#f472b6", nombre: "Tarea", icono: "tarea" },
   cita: { color: "#e8a85b", nombre: "Cita de gatita", icono: "huella" },
+  fecha: { color: "#fbbf24", nombre: "Fecha importante", icono: "regalo" },
   pomodoro: { color: "#9cc96b", nombre: "Pomodoro hecho", icono: "reloj" },
 };
 
@@ -57,6 +59,7 @@ function useItems(): Item[] {
   const tareas = useNekoStore((s) => s.tareas);
   const citas = useNekoStore((s) => s.citas);
   const entradas = useNekoStore((s) => s.entradasTiempo);
+  const fechas = useNekoStore((s) => s.fechasImportantes);
   return useMemo(() => {
     const lista: Item[] = [];
     eventos.forEach((e) =>
@@ -70,11 +73,21 @@ function useItems(): Item[] {
       const ini = new Date(`${c.fecha}T00:00:00`);
       lista.push({ id: `c-${c.id}`, ref: c.id, tipo: "cita", titulo: `${NOMBRE_CITA[c.tipo]} · ${PERFILES[c.gatita].nombre}`, inicio: ini, fin: sumar(ini, 1), todoElDia: true, hecha: c.hecha });
     });
+    // fechas importantes: de un año atrás a un año adelante
+    const hoy = hoyISO();
+    const desde = `${Number(hoy.slice(0, 4)) - 1}${hoy.slice(4)}`;
+    const hasta = `${Number(hoy.slice(0, 4)) + 1}${hoy.slice(4)}`;
+    fechas.forEach((f) =>
+      ocurrenciasEntre(f, desde, hasta).forEach((dia) => {
+        const ini = new Date(`${dia}T00:00:00`);
+        lista.push({ id: `f-${f.id}-${dia}`, ref: f.id, tipo: "fecha", titulo: tituloFecha(f, dia), inicio: ini, fin: sumar(ini, 1), todoElDia: true });
+      }),
+    );
     entradas.forEach((e) =>
       lista.push({ id: `p-${e.id}`, ref: e.id, tipo: "pomodoro", titulo: tareas.find((t) => t.id === e.tareaId)?.titulo ?? "Enfoque", inicio: new Date(e.inicio), fin: new Date(e.fin), todoElDia: false }),
     );
     return lista;
-  }, [eventos, tareas, citas, entradas]);
+  }, [eventos, tareas, citas, entradas, fechas]);
 }
 
 /** Reparte en carriles los elementos que se enciman en un mismo día */
@@ -725,6 +738,7 @@ function Detalle({ item, alTerminar }: { item: Item; alTerminar: (texto?: string
       </div>
       {evento?.descripcion && <p className="whitespace-pre-wrap rounded-xl bg-noche-900/70 p-3 text-sm text-white/70">{evento.descripcion}</p>}
       {item.tipo === "ejemplo" && <p className="text-xs text-white/45">Es un evento de ejemplo. Desaparece al conectar Google Calendar o con "Quitar ejemplos".</p>}
+      {item.tipo === "fecha" && <p className="text-xs text-white/45">La editas en Organizar → Fechas.</p>}
       {item.tipo === "pomodoro" && <p className="text-xs text-white/45">Bloque de enfoque que hiciste con Mango.</p>}
 
       <div className="flex flex-wrap gap-2">

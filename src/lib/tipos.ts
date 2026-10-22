@@ -4,6 +4,8 @@ export type Prioridad = "baja" | "media" | "alta" | "urgente";
 export type Rutina = "manana" | "dia" | "noche" | "ninguna";
 export type ClaveGatita = "blanquita" | "bizca" | "mango" | "ronro";
 export type ClaveAccesorio = "mono" | "collar" | "gorrito" | "lentes" | "corona";
+export type ClaveDecoracion =
+  | "estambre" | "cojin" | "planta" | "luces" | "camita" | "lampara" | "rascador" | "pecera" | "luna" | "alfombra";
 export type TipoCuidado =
   | "comida" | "agua_fresca" | "arenero" | "cepillado" | "juego"
   | "vacuna" | "desparasitacion" | "veterinario" | "medicamento";
@@ -39,6 +41,7 @@ export interface TipoBebida {
   color: string;
   porcentaje: number;        // cuánto cuenta para la meta (0-100)
   tamanosMl: number[];
+  oculta?: boolean;          // no aparece en los botones, pero su historial se conserva
 }
 
 export interface RegistroBebida {
@@ -100,6 +103,71 @@ export interface Nota {
   fijada: boolean;
   origen: "app" | "ia" | "compartido" | "samsung_notes" | "whatsapp" | "telegram";
   creadoEn: string;
+  actualizadoEn?: string;
+}
+
+export interface ItemLista { id: string; texto: string; hecho: boolean; cantidad?: string }
+
+export interface Lista {
+  id: string;
+  nombre: string;
+  icono: NombreIcono;
+  color: string;
+  items: ItemLista[];
+  creadoEn: string;
+}
+
+export type TipoFecha = "cumpleanos" | "aniversario" | "vencimiento" | "otro";
+
+export interface FechaImportante {
+  id: string;
+  titulo: string;
+  tipo: TipoFecha;
+  fecha: string;            // AAAA-MM-DD (para cumpleaños, el año es el de nacimiento si se sabe)
+  cadaAnio: boolean;        // se repite cada año
+  conAnio: boolean;         // el año es real (sirve para "cumple 30")
+  avisarDiasAntes: number;  // 0 = solo el mismo día
+  nota?: string;
+  creadoEn: string;
+}
+
+export type TipoTransaccion = "gasto" | "ingreso";
+
+export interface CategoriaDinero {
+  id: string;
+  nombre: string;
+  icono: NombreIcono;
+  color: string;
+  tipo: TipoTransaccion;
+  presupuesto?: number;      // límite mensual en MXN (solo gastos)
+  orden: number;
+}
+
+export interface Transaccion {
+  id: string;
+  tipo: TipoTransaccion;
+  monto: number;             // MXN, siempre positivo
+  categoriaId: string;
+  nota?: string;
+  fecha: string;             // AAAA-MM-DD
+  suscripcionId?: string;
+  creadoEn: string;
+}
+
+export type Frecuencia = "semanal" | "mensual" | "anual";
+
+export interface Suscripcion {
+  id: string;
+  nombre: string;
+  monto: number;
+  frecuencia: Frecuencia;
+  proximoCobro: string;      // AAAA-MM-DD
+  diaCobro: number;          // día del mes original (para no "perder" el 31)
+  categoriaId: string;
+  avisarDiasAntes: number;
+  activa: boolean;
+  color: string;
+  creadoEn: string;
 }
 
 export type ProveedorIA = "claude" | "gemini";
@@ -131,6 +199,16 @@ export interface ConfigRecordatorios {
   rutinas: { activo: boolean; manana: string; noche: string };
   tareas: { activo: boolean; minutosAntes: number };
   gatitas: { activo: boolean; hora: string };
+  fechas?: { activo: boolean; hora: string };
+  dinero?: { activo: boolean; hora: string };
+}
+
+export interface AjustesCiclo {
+  avisar: boolean;           // aviso discreto antes del próximo periodo
+  diasAntes: number;
+  hora: string;
+  cicloInicial: number;      // mientras no haya historial suficiente
+  periodoInicial: number;
 }
 
 export interface Ajustes {
@@ -144,6 +222,7 @@ export interface Ajustes {
   proveedorIa: ProveedorIA;
   claveIa?: string;        // NEKO_CLAVE_ACCESO, si la configuraste en Vercel
   recordatorios: ConfigRecordatorios;
+  ciclo?: AjustesCiclo;
 }
 
 export type NombreIcono =
@@ -154,4 +233,5 @@ export type NombreIcono =
   | "plato" | "arenero" | "vacuna" | "pastilla" | "veterinario" | "racha"
   | "etiqueta" | "cerrar" | "chispa" | "libro" | "pesa" | "tienda" | "casa"
   | "ajustes" | "flecha" | "bocina" | "silencio" | "lista"
-  | "copiar" | "enviar" | "detener" | "google" | "sincronizar" | "izquierda" | "derecha";
+  | "copiar" | "enviar" | "detener" | "google" | "sincronizar" | "izquierda" | "derecha"
+  | "regalo" | "dinero" | "buscar" | "fijar" | "lapiz" | "carrito" | "pelicula" | "carpeta" | "bienestar" | "anillo" | "documento" | "auto" | "ingreso" | "gasto" | "grafica" | "flor" | "ojo" | "ojoCerrado" | "leche" | "botella";

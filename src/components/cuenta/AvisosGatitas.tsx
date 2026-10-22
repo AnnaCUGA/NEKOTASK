@@ -19,7 +19,7 @@ export function AvisosGatitas({ avisos, alCerrar, alAbrir }: { avisos: Recordato
   }, [avisos, alCerrar]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-3 bottom-[96px] z-50 flex flex-col items-center gap-2 lg:bottom-6 lg:left-6 lg:right-auto lg:items-start" aria-live="polite">
+    <div className="pointer-events-none fixed inset-x-3 bottom-[152px] z-50 flex flex-col items-center gap-2 lg:bottom-6 lg:left-6 lg:right-auto lg:items-start" aria-live="polite">
       <AnimatePresence>
         {avisos.map((a) => (
           <motion.div

@@ -70,7 +70,7 @@ async function cargarDatos(db: NonNullable<ReturnType<typeof supabaseAdmin>>, us
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => r.datos as unknown);
   };
-  const [ajustes, tareas, registroBebidas, habitos, registroHabitos, citas, registroCuidados] = await Promise.all([
+  const [ajustes, tareas, registroBebidas, habitos, registroHabitos, citas, registroCuidados, fechasImportantes, suscripciones, diasPeriodo] = await Promise.all([
     leer("ajustes"),
     leer("tareas", { eq: ["datos->>completada", "false"] }),
     leer("registroBebidas", { gte: ["datos->>en", desde] }),
@@ -78,11 +78,16 @@ async function cargarDatos(db: NonNullable<ReturnType<typeof supabaseAdmin>>, us
     leer("registroHabitos", { like: ["id", `%|${dia}`] }),
     leer("citas", { eq: ["datos->>fecha", dia] }),
     leer("registroCuidados", { like: ["id", `%|${dia}`] }),
+    leer("fechasImportantes"),
+    leer("suscripciones", { eq: ["datos->>activa", "true"] }),
+    leer("diasPeriodo"),
   ]);
   const a = (ajustes[0] ?? {}) as Partial<Ajustes>;
   return {
     recordatorios: a.recordatorios ?? RECORDATORIOS_INICIALES,
     metaAguaMl: a.metaAguaMl ?? 2000,
-    tareas, registroBebidas, habitos, registroHabitos, citas, registroCuidados,
+    tareas, registroBebidas, habitos, registroHabitos, citas, registroCuidados, fechasImportantes, suscripciones,
+    diasPeriodo: (diasPeriodo as { valor: string }[]).map((x) => x.valor),
+    ciclo: a.ciclo,
   } as DatosRecordatorio;
 }

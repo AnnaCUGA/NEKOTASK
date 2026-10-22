@@ -115,7 +115,6 @@ export function PanelTiempoLibre() {
 export function PanelPomodoro() {
   const p = useNekoStore((s) => s.pomodoro);
   const tareas = useNekoStore((s) => s.tareas);
-  const accesorio = useNekoStore((s) => s.gatitas.find((g) => g.clave === "mango")?.accesorio);
   const minutos = useNekoStore((s) => s.ajustes.pomodoroMin);
   const ajustar = useNekoStore((s) => s.actualizarAjustes);
   const [guia, setGuia] = useState(false);
@@ -179,7 +178,7 @@ export function PanelPomodoro() {
         </div>
         <div className="flex min-w-0 flex-1 flex-col items-center">
           <Gatita clave="mango" pose={p.fase === "descanso" ? "panzaArriba" : "sentada"}
-            expresion={p.fase === "trabajo" ? "concentrada" : p.fase === "descanso" ? "feliz" : "normal"} accesorio={accesorio} ancho={104} />
+            expresion={p.fase === "trabajo" ? "concentrada" : p.fase === "descanso" ? "feliz" : "normal"} ancho={104} />
         </div>
       </div>
 

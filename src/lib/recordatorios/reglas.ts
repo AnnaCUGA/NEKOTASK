@@ -2,7 +2,10 @@
  * Reglas de recordatorios — funciones puras que usan tanto la app (avisos en pantalla)
  * como el servidor (notificaciones push cada 10 minutos).
  */
-import type { CitaGatita, ClaveGatita, ConfigRecordatorios, Habito, RegistroBebida, RegistroCuidado, RegistroHabito, Rutina, Tarea } from "@/lib/tipos";
+import { AJUSTES_CICLO, estadoCiclo } from "@/lib/ciclo";
+import { diasEntre, pesos } from "@/lib/dinero";
+import { TIPOS_FECHA, diasParaFecha, tituloFecha } from "@/lib/fechasImportantes";
+import type { AjustesCiclo, CitaGatita, FechaImportante, Suscripcion, ClaveGatita, ConfigRecordatorios, Habito, RegistroBebida, RegistroCuidado, RegistroHabito, Rutina, Tarea } from "@/lib/tipos";
 
 export interface DatosRecordatorio {
   recordatorios: ConfigRecordatorios;
@@ -13,6 +16,10 @@ export interface DatosRecordatorio {
   registroHabitos: RegistroHabito[];
   citas: Pick<CitaGatita, "id" | "gatita" | "tipo" | "fecha" | "hecha">[];
   registroCuidados: RegistroCuidado[];
+  fechasImportantes?: FechaImportante[];
+  diasPeriodo?: string[];
+  ciclo?: AjustesCiclo;
+  suscripciones?: Pick<Suscripcion, "id" | "nombre" | "monto" | "proximoCobro" | "avisarDiasAntes" | "activa">[];
 }
 
 export interface Recordatorio {
@@ -136,6 +143,65 @@ export function calcularRecordatorios(d: DatosRecordatorio, ahora: Date, zona: s
           url: "/?seccion=gatitas",
         });
       }
+    }
+  }
+
+  // ── Fechas importantes: el mismo día y N días antes ──────────────────
+  const rf = r.fechas ?? { activo: true, hora: "09:00" };
+  if (rf.activo && d.fechasImportantes?.length) {
+    const h = aMin(rf.hora);
+    if (minutos >= h && minutos <= h + VENTANA) {
+      for (const f of d.fechasImportantes) {
+        const faltan = diasParaFecha(f, dia);
+        if (faltan !== 0 && faltan !== f.avisarDiasAntes) continue;
+        const titulo = tituloFecha(f, dia);
+        const cumple = f.tipo === "cumpleanos";
+        lista.push({
+          clave: `fecha-${f.id}-${dia}`,
+          titulo: faltan === 0 ? `Hoy: ${titulo}` : `${faltan === 1 ? "Mañana" : `En ${faltan} días`}: ${titulo}`,
+          cuerpo: cumple
+            ? (faltan === 0 ? "Bizca ya preparó el pastel. ¡No olvides felicitar!" : "Bizca dice que aún hay tiempo para el regalo.")
+            : `${TIPOS_FECHA[f.tipo].nombre}. Blanquita lo tiene anotado por ti.`,
+          gatita: cumple ? "bizca" : "blanquita",
+          url: "/?seccion=fechas",
+        });
+      }
+    }
+  }
+
+  // ── Cobros de suscripciones ──────────────────────────────────────────
+  const rd = r.dinero ?? { activo: true, hora: "10:00" };
+  if (rd.activo && d.suscripciones?.length) {
+    const h = aMin(rd.hora);
+    if (minutos >= h && minutos <= h + VENTANA) {
+      for (const x of d.suscripciones) {
+        if (!x.activa) continue;
+        const faltan = diasEntre(dia, x.proximoCobro);
+        if (faltan !== 0 && faltan !== x.avisarDiasAntes) continue;
+        lista.push({
+          clave: `cobro-${x.id}-${x.proximoCobro}-${faltan}`,
+          titulo: faltan === 0 ? `Hoy se cobra ${x.nombre}` : `${faltan === 1 ? "Mañana" : `En ${faltan} días`} se cobra ${x.nombre}`,
+          cuerpo: `Mango apartó ${pesos(x.monto)}. ${faltan === 0 ? "Confírmalo en Dinero cuando salga." : "¿Todavía la usas?"}`,
+          gatita: "mango",
+          url: "/?seccion=suscripciones",
+        });
+      }
+    }
+  }
+
+  // ── Ciclo: aviso discreto (no dice de qué se trata en la pantalla bloqueada) ──
+  const ac = d.ciclo ?? AJUSTES_CICLO;
+  if (ac.avisar && d.diasPeriodo?.length) {
+    const h = aMin(ac.hora);
+    const e = estadoCiclo(d.diasPeriodo, dia, ac);
+    if (minutos >= h && minutos <= h + VENTANA && !e.enPeriodo && e.diasParaProximo === ac.diasAntes) {
+      lista.push({
+        clave: `bienestar-${e.proximoInicio}`,
+        titulo: "Recordatorio de Blanquita",
+        cuerpo: "Tienes algo pendiente en Bienestar.",
+        gatita: "blanquita",
+        url: "/?seccion=ciclo",
+      });
     }
   }
 

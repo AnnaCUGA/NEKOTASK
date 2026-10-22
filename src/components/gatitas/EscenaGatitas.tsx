@@ -8,6 +8,8 @@ import type { ClaveGatita, NombreIcono } from "@/lib/tipos";
 import { useNekoStore } from "@/store/useNekoStore";
 import { Gatita, type Expresion, type MovCabeza, type Pose } from "./Gatita";
 import { FondoSala } from "./FondoSala";
+import { Alfombra, CATALOGO_DECORACION, Guirnalda, PiezaDecoracion } from "./Decoracion";
+import { decoracionPropia } from "@/store/useNekoStore";
 import { ORDEN_GATITAS, PERFILES } from "./perfiles";
 import { IconoNeko } from "@/components/iconos/IconoNeko";
 
@@ -63,7 +65,9 @@ export function EscenaGatitas({ alto = 210 }: { alto?: number }) {
   const [ancho, setAncho] = useState(800);
   const temporizadores = useRef<number[]>([]);
 
-  const gatitasStore = useNekoStore((s) => s.gatitas);
+  const decoracion = useNekoStore((s) => s.decoracion);
+  const accesoriosViejos = useNekoStore((s) => s.accesoriosComprados);
+  const enSala = decoracionPropia({ decoracion, accesoriosComprados: accesoriosViejos });
   const sonidos = useNekoStore((s) => s.ajustes.sonidos);
   const sonidosRef = useRef(sonidos);
   sonidosRef.current = sonidos;
@@ -264,7 +268,7 @@ export function EscenaGatitas({ alto = 210 }: { alto?: number }) {
   };
 
   const tamGatita = Math.round(Math.min(132, Math.max(76, ancho / 5.6)));
-  const accesorioDe = (c: ClaveGatita) => gatitasStore.find((g) => g.clave === c)?.accesorio;
+  const escalaDeco = tamGatita / 110;
 
   return (
     <div
@@ -273,6 +277,16 @@ export function EscenaGatitas({ alto = 210 }: { alto?: number }) {
       style={{ height: alto }}
     >
       <FondoSala />
+      {enSala.includes("luces") && <Guirnalda />}
+      {enSala.includes("alfombra") && <Alfombra />}
+      {CATALOGO_DECORACION.filter((d) => enSala.includes(d.clave) && d.lugar.ancho > 0).map((d) => (
+        <div key={d.clave} className="pointer-events-none absolute"
+          style={d.lugar.donde === "arriba"
+            ? { left: `${d.lugar.x}%`, top: 6, transform: "translateX(-50%)", zIndex: 0 }
+            : { left: `${d.lugar.x}%`, bottom: 8, transform: "translateX(-50%)", zIndex: d.lugar.detras ? 0 : 100 }}>
+          <PiezaDecoracion clave={d.clave} ancho={Math.round(d.lugar.ancho * (d.lugar.donde === "arriba" ? 1 : escalaDeco))} />
+        </div>
+      ))}
       {/* platito de agua */}
       <div className="absolute" style={{ left: "6%", bottom: 12, transform: "translateX(-50%)" }}>
         <Platito color={estado.blanquita.platito} />
@@ -291,7 +305,7 @@ export function EscenaGatitas({ alto = 210 }: { alto?: number }) {
             transition={{ duration: g.durMs / 1000, ease: "easeInOut" }}
             onClick={() => tocar(c)}
           >
-            <GatitaEnEscena estado={g} clave={c} tam={tamGatita} accesorio={accesorioDe(c)} />
+            <GatitaEnEscena estado={g} clave={c} tam={tamGatita} />
           </motion.div>
         );
       })}
@@ -299,9 +313,7 @@ export function EscenaGatitas({ alto = 210 }: { alto?: number }) {
   );
 }
 
-function GatitaEnEscena({
-  estado, clave, tam, accesorio,
-}: { estado: EstadoGatita; clave: ClaveGatita; tam: number; accesorio?: ReturnType<typeof useNekoStore.getState>["gatitas"][number]["accesorio"] }) {
+function GatitaEnEscena({ estado, clave, tam }: { estado: EstadoGatita; clave: ClaveGatita; tam: number }) {
   const controles = useAnimationControls();
   const [encima, setEncima] = useState(false);
 
@@ -316,10 +328,7 @@ function GatitaEnEscena({
       onHoverEnd={() => setEncima(false)}
       className="relative"
     >
-      <motion.div
-        animate={estado.caminando ? { y: [0, -5, 0] } : { y: 0 }}
-        transition={estado.caminando ? { duration: 0.32, repeat: Infinity } : { duration: 0.2 }}
-      >
+      <div>
         <Gatita
           clave={clave}
           pose={estado.pose}
@@ -327,10 +336,10 @@ function GatitaEnEscena({
           cabeza={encima && estado.cabeza === "normal" ? "inclinada" : estado.cabeza}
           espejo={estado.espejo}
           ronroneando={estado.ronroneando}
-          accesorio={accesorio}
+          caminando={estado.caminando}
           ancho={tam}
         />
-      </motion.div>
+      </div>
       <AnimatePresence>
         {estado.burbuja && (
           <motion.div

@@ -2,15 +2,15 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { CATALOGO_ACCESORIOS } from "@/components/gatitas/Accesorios";
+import { CATALOGO_DECORACION, MiniaturaDecoracion } from "@/components/gatitas/Decoracion";
 import { Gatita } from "@/components/gatitas/Gatita";
 import { ORDEN_GATITAS, PERFILES } from "@/components/gatitas/perfiles";
 import { IconoNeko } from "@/components/iconos/IconoNeko";
 import { BotonIcono, Chip, Panel } from "@/components/ui/Panel";
 import { confetiDesde } from "@/lib/eventos";
 import { diasHasta, formatoFechaCorta, hoyISO } from "@/lib/fechas";
-import type { CitaGatita, ClaveAccesorio, ClaveGatita, NombreIcono, TipoCuidado } from "@/lib/tipos";
-import { useNekoStore } from "@/store/useNekoStore";
+import type { CitaGatita, ClaveGatita, NombreIcono, TipoCuidado } from "@/lib/tipos";
+import { decoracionPropia, useNekoStore } from "@/store/useNekoStore";
 
 const CUIDADOS_DIARIOS: { tipo: TipoCuidado; nombre: string; icono: NombreIcono }[] = [
   { tipo: "comida", nombre: "Comida", icono: "plato" },
@@ -62,7 +62,7 @@ function TarjetaGatita({ clave }: { clave: ClaveGatita }) {
   return (
     <div className="flex flex-col rounded-2xl border border-noche-600 bg-noche-700/50 p-3">
       <div className="flex items-end gap-2">
-        <Gatita clave={clave} pose={perfil.poseFavorita === "dormida" ? "echada" : "sentada"} expresion={todos ? "feliz" : "normal"} accesorio={gatita?.accesorio} ancho={86} />
+        <Gatita clave={clave} pose={perfil.poseFavorita === "dormida" ? "echada" : "sentada"} expresion={todos ? "feliz" : "normal"} ancho={86} />
         <div className="min-w-0 pb-2">
           <p className="font-titulo text-lg font-semibold text-white">{perfil.nombre}</p>
           <p className="text-[11px] text-white/50">{perfil.descripcionRol}</p>
@@ -149,51 +149,39 @@ function FormCita({ alGuardar }: { alGuardar: () => void }) {
   );
 }
 
-// ─── Tienda de croquetas ────────────────────────────────────────────────
+// ─── Tienda: cosas para la sala ─────────────────────────────────────────
 export function PanelTienda() {
   const croquetas = useNekoStore((s) => s.croquetas);
-  const comprados = useNekoStore((s) => s.accesoriosComprados);
-  const gatitas = useNekoStore((s) => s.gatitas);
+  const decoracion = useNekoStore((s) => s.decoracion);
+  const viejos = useNekoStore((s) => s.accesoriosComprados);
   const movimientos = useNekoStore((s) => s.movimientos);
-  const comprar = useNekoStore((s) => s.comprarAccesorio);
-  const equipar = useNekoStore((s) => s.equiparAccesorio);
-  const [para, setPara] = useState<ClaveGatita>("blanquita");
+  const comprar = useNekoStore((s) => s.comprarDecoracion);
   const [aviso, setAviso] = useState("");
-
-  const accesorioDe = (c: ClaveGatita) => gatitas.find((g) => g.clave === c)?.accesorio;
+  const propia = decoracionPropia({ decoracion, accesoriosComprados: viejos });
 
   return (
-    <Panel titulo="Tienda de croquetas" icono="tienda" acento="croqueta"
+    <Panel titulo="Cosas para la sala" icono="tienda" acento="croqueta"
       accion={<span className="flex items-center gap-1.5 rounded-full bg-croqueta/15 px-3 py-1 font-titulo font-semibold text-croqueta"><IconoNeko nombre="croqueta" tamano={18} />{croquetas}</span>}>
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        {ORDEN_GATITAS.map((c) => (
-          <button key={c} type="button" onClick={() => setPara(c)}
-            className={`rounded-full border px-3 py-1 text-xs font-semibold ${para === c ? "border-croqueta bg-croqueta/20 text-white" : "border-noche-600 text-white/55"}`}>
-            {PERFILES[c].nombre}
-          </button>
-        ))}
-      </div>
+      <p className="-mt-1 mb-3 text-xs text-white/50">Decora la sala donde viven tus gatitas. Lo que compres aparece en la escena de arriba y en Hoy.</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {CATALOGO_ACCESORIOS.map((a) => {
-          const tiene = comprados.includes(a.clave);
-          const puesto = accesorioDe(para) === a.clave;
+        {CATALOGO_DECORACION.map((a) => {
+          const tiene = propia.includes(a.clave);
           const alcanza = croquetas >= a.precio;
           return (
-            <div key={a.clave} className={`flex flex-col items-center rounded-2xl border p-2 ${puesto ? "border-croqueta/70 bg-croqueta/10" : "border-noche-600 bg-noche-700/50"}`}>
-              <Gatita clave={para} pose="sentada" accesorio={a.clave} expresion={puesto ? "feliz" : "normal"} ancho={74} />
-              <p className="mt-1 text-center text-xs font-semibold text-white/85">{a.nombre}</p>
+            <div key={a.clave} className={`flex flex-col items-center rounded-2xl border p-2 ${tiene ? "border-croqueta/60 bg-croqueta/[0.08]" : "border-noche-600 bg-noche-700/50"}`}>
+              <div className="grid h-[76px] w-full place-items-center rounded-xl bg-[#1d1829]">
+                <MiniaturaDecoracion clave={a.clave} />
+              </div>
+              <p className="mt-1.5 text-center text-xs font-semibold leading-tight text-white/85">{a.nombre}</p>
               {tiene ? (
-                <button type="button" onClick={() => equipar(para, puesto ? undefined : (a.clave as ClaveAccesorio))}
-                  className={`mt-1.5 w-full rounded-lg py-1 text-xs font-bold ${puesto ? "bg-noche-600 text-white/70" : "bg-croqueta text-noche"}`}>
-                  {puesto ? "Quitar" : "Ponérselo"}
-                </button>
+                <p className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-lg bg-noche-600/70 py-1 text-xs font-bold text-white/70">
+                  <IconoNeko nombre="check" tamano={13} grosor={2.6} /> En la sala
+                </p>
               ) : (
                 <button
                   type="button"
                   disabled={!alcanza}
-                  onClick={(e) => {
-                    if (comprar(a.clave)) { confetiDesde(e.currentTarget, "#e8a85b"); equipar(para, a.clave); setAviso(""); }
-                  }}
+                  onClick={(e) => { if (comprar(a.clave)) { confetiDesde(e.currentTarget, "#e8a85b"); setAviso(""); } }}
                   onMouseEnter={() => !alcanza && setAviso(`Te faltan ${a.precio - croquetas} croquetas`)}
                   onMouseLeave={() => setAviso("")}
                   className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-lg border border-croqueta/50 py-1 text-xs font-bold text-croqueta disabled:opacity-40"

@@ -1,7 +1,8 @@
 "use client";
 
+import { ETIQUETA_FRECUENCIA, pesos, resumenMes } from "@/lib/dinero";
 import { calcularTiempoLibre } from "@/components/dashboard/PanelTiempo";
-import { esHoy, formatoDuracion, formatoHora } from "@/lib/fechas";
+import { esHoy, formatoDuracion, formatoHora, hoyISO } from "@/lib/fechas";
 import { ES_VISTA_PREVIA } from "@/lib/google/cliente";
 import type { MensajeIA, ModoIA, ProveedorIA } from "@/lib/tipos";
 import { hechoHoy, mlEfectivosHoy, tocaHoy, useNekoStore } from "@/store/useNekoStore";
@@ -37,6 +38,10 @@ export function contextoDeLaApp() {
   const libre = calcularTiempoLibre(Date.now(), s.ajustes.horaInicioDia, s.ajustes.horaFinDia, s.eventosCalendario.filter((e) => !e.todoElDia), s.tareas);
   const habitos = s.habitos.filter((h) => tocaHoy(h) && !hechoHoy(h.id, s.registroHabitos)).map((h) => h.nombre);
   const agua = Math.round(mlEfectivosHoy(s.registroBebidas));
+  const mes = hoyISO().slice(0, 7);
+  const dinero = resumenMes(s.transacciones, s.categoriasDinero, mes);
+  const topGastos = dinero.porCategoria.slice(0, 5).map((c) => `${c.categoria.nombre} ${pesos(c.total, true)}${c.presupuesto ? ` de ${pesos(c.presupuesto, true)}` : ""}`);
+  const subs = s.suscripciones.filter((x) => x.activa);
   return [
     `Ahora: ${ahora.toLocaleString("es-MX", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}. Su día termina a las ${s.ajustes.horaFinDia}.`,
     `Tiempo libre estimado: ${formatoDuracion(libre.libreMin)}.`,
@@ -44,6 +49,7 @@ export function contextoDeLaApp() {
     `Tareas pendientes:\n${pendientes.join("\n") || "- (ninguna)"}`,
     `Hábitos sin marcar hoy: ${habitos.join(", ") || "ninguno"}.`,
     `Hidratación: ${agua} de ${s.ajustes.metaAguaMl} ml.`,
+    `Dinero este mes (MXN): gastos ${pesos(dinero.gastos, true)}, ingresos ${pesos(dinero.ingresos, true)}. Por categoría: ${topGastos.join(", ") || "sin gastos aún"}. Suscripciones activas: ${subs.map((x) => `${x.nombre} ${pesos(x.monto, true)} ${ETIQUETA_FRECUENCIA[x.frecuencia]}`).join(", ") || "ninguna"}.`,
   ].join("\n");
 }
 

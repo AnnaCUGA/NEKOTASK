@@ -4,14 +4,16 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { almacenamientoSeguro } from "@/lib/almacenamiento";
 import { bus } from "@/lib/eventos";
+import { siguienteCobro } from "@/lib/dinero";
 import { esHoy, hoyISO, sumarDias, uid } from "@/lib/fechas";
 import type {
-  Ajustes, CitaGatita, ClaveAccesorio, ClaveGatita, Conversacion, EntradaTiempo, EventoCalendario, Gatita, Habito,
+  Ajustes, CategoriaDinero, CitaGatita, ClaveDecoracion, FechaImportante, Suscripcion, Transaccion, ItemLista, Lista, ClaveAccesorio, ClaveGatita, Conversacion, EntradaTiempo, EventoCalendario, Gatita, Habito,
   MensajeIA, ModoIA, MovimientoCroquetas, Nota, Prioridad, RegistroBebida, RegistroCuidado, RegistroHabito, Rutina, Tarea, TipoBebida, TipoCuidado,
 } from "@/lib/tipos";
 import { CATALOGO_ACCESORIOS } from "@/components/gatitas/Accesorios";
+import { CATALOGO_DECORACION, DE_ACCESORIO } from "@/components/gatitas/Decoracion";
 import {
-  AJUSTES_INICIALES, BEBIDAS_INICIALES, RECORDATORIOS_INICIALES, GATITAS_INICIALES, HABITOS_INICIALES, TAREAS_EJEMPLO, eventosEjemplo,
+  AJUSTES_INICIALES, BEBIDAS_INICIALES, RECORDATORIOS_INICIALES, CATEGORIAS_INICIALES, GATITAS_INICIALES, HABITOS_INICIALES, LISTAS_INICIALES, TAREAS_EJEMPLO, eventosEjemplo,
 } from "./datosIniciales";
 
 // ─── Recompensas en croquetas ───────────────────────────────────────────
@@ -54,6 +56,7 @@ interface EstadoNeko {
   registroHabitos: RegistroHabito[];
   gatitas: Gatita[];
   accesoriosComprados: ClaveAccesorio[];
+  decoracion: ClaveDecoracion[];
   citas: CitaGatita[];
   registroCuidados: RegistroCuidado[];
   croquetas: number;
@@ -61,6 +64,12 @@ interface EstadoNeko {
   eventosCalendario: EventoCalendario[];
   googleConectado: boolean;
   notas: Nota[];
+  listas: Lista[];
+  fechasImportantes: FechaImportante[];
+  transacciones: Transaccion[];
+  categoriasDinero: CategoriaDinero[];
+  suscripciones: Suscripcion[];
+  diasPeriodo: string[];
   conversaciones: Conversacion[];
   pomodoro: EstadoPomodoro;
 
@@ -75,6 +84,33 @@ interface EstadoNeko {
   agregarNota: (n: Omit<Nota, "id" | "creadoEn" | "fijada">) => void;
   eliminarNota: (id: string) => void;
   alternarFijada: (id: string) => void;
+  actualizarNota: (id: string, cambios: Partial<Pick<Nota, "titulo" | "contenido" | "etiquetas">>) => void;
+  // listas
+  agregarLista: (l: Pick<Lista, "nombre" | "icono" | "color">) => string;
+  actualizarLista: (id: string, cambios: Partial<Pick<Lista, "nombre" | "icono" | "color">>) => void;
+  eliminarLista: (id: string) => void;
+  agregarItemLista: (listaId: string, texto: string, cantidad?: string) => void;
+  actualizarItemLista: (listaId: string, itemId: string, cambios: Partial<Omit<ItemLista, "id">>) => void;
+  eliminarItemLista: (listaId: string, itemId: string) => void;
+  limpiarLista: (listaId: string, modo: "quitarHechos" | "desmarcar") => void;
+  // fechas importantes
+  agregarFecha: (f: Omit<FechaImportante, "id" | "creadoEn">) => void;
+  actualizarFecha: (id: string, cambios: Partial<Omit<FechaImportante, "id" | "creadoEn">>) => void;
+  eliminarFecha: (id: string) => void;
+  // dinero
+  agregarTransaccion: (t: Omit<Transaccion, "id" | "creadoEn">) => string;
+  actualizarTransaccion: (id: string, cambios: Partial<Omit<Transaccion, "id" | "creadoEn">>) => void;
+  eliminarTransaccion: (id: string) => void;
+  agregarCategoria: (c: Omit<CategoriaDinero, "id" | "orden">) => string;
+  actualizarCategoria: (id: string, cambios: Partial<Omit<CategoriaDinero, "id">>) => void;
+  eliminarCategoria: (id: string) => void;
+  agregarSuscripcion: (s: Omit<Suscripcion, "id" | "creadoEn" | "diaCobro">) => void;
+  actualizarSuscripcion: (id: string, cambios: Partial<Omit<Suscripcion, "id" | "creadoEn">>) => void;
+  eliminarSuscripcion: (id: string) => void;
+  registrarCobro: (id: string) => void;
+  // ciclo
+  alternarDiaPeriodo: (dia: string) => void;
+  saltarCobro: (id: string) => void;
   // asistente
   crearConversacion: (modo: ModoIA) => string;
   agregarMensaje: (convId: string, m: Omit<MensajeIA, "id" | "en">) => string;
@@ -92,6 +128,9 @@ interface EstadoNeko {
   deshacerUltimaBebida: () => void;
   actualizarBebida: (id: string, cambios: Partial<TipoBebida>) => void;
   agregarTipoBebida: (b: Omit<TipoBebida, "id">) => void;
+  eliminarTipoBebida: (id: string) => void;
+  borrarTipoBebida: (id: string) => void;
+  moverBebida: (id: string, direccion: -1 | 1) => void;
   // hábitos
   agregarHabito: (h: Omit<Habito, "id" | "creadoEn">) => void;
   eliminarHabito: (id: string) => void;
@@ -102,6 +141,7 @@ interface EstadoNeko {
   completarCita: (id: string) => void;
   eliminarCita: (id: string) => void;
   comprarAccesorio: (clave: ClaveAccesorio) => boolean;
+  comprarDecoracion: (clave: ClaveDecoracion) => boolean;
   equiparAccesorio: (gatita: ClaveGatita, clave?: ClaveAccesorio) => void;
   // pomodoro
   iniciarPomodoro: (tareaId?: string) => void;
@@ -140,6 +180,10 @@ export function rachaHabito(h: Habito, registros: RegistroHabito[]) {
   return racha;
 }
 
+/** Lo que hay en la sala (incluye lo comprado en la tienda anterior, por si llega por sincronización) */
+export const decoracionPropia = (s: { decoracion?: ClaveDecoracion[]; accesoriosComprados?: ClaveAccesorio[] }) =>
+  [...new Set([...(s.decoracion ?? []), ...(s.accesoriosComprados ?? []).map((a) => DE_ACCESORIO[a])])];
+
 export const hechoHoy = (habitoId: string, registros: RegistroHabito[]) =>
   registros.some((r) => r.habitoId === habitoId && r.fecha === hoyISO());
 
@@ -166,6 +210,7 @@ export const useNekoStore = create<EstadoNeko>()(
         registroHabitos: [],
         gatitas: GATITAS_INICIALES,
         accesoriosComprados: [],
+        decoracion: [],
         citas: [],
         registroCuidados: [],
         croquetas: 20,
@@ -173,6 +218,12 @@ export const useNekoStore = create<EstadoNeko>()(
         eventosCalendario: eventosEjemplo(),
         googleConectado: false,
         notas: [],
+        listas: LISTAS_INICIALES,
+        fechasImportantes: [],
+        transacciones: [],
+        categoriasDinero: CATEGORIAS_INICIALES,
+        suscripciones: [],
+        diasPeriodo: [],
         conversaciones: [],
 
         // ── Calendario ────────────────────────────────────────────────
@@ -199,6 +250,92 @@ export const useNekoStore = create<EstadoNeko>()(
           set((s) => ({ notas: [{ ...n, id: uid(), fijada: false, creadoEn: new Date().toISOString() }, ...s.notas] })),
         eliminarNota: (id) => set((s) => ({ notas: s.notas.filter((n) => n.id !== id) })),
         alternarFijada: (id) => set((s) => ({ notas: s.notas.map((n) => (n.id === id ? { ...n, fijada: !n.fijada } : n)) })),
+        actualizarNota: (id, cambios) =>
+          set((s) => ({ notas: s.notas.map((n) => (n.id === id ? { ...n, ...cambios, actualizadoEn: new Date().toISOString() } : n)) })),
+
+        // ── Listas ────────────────────────────────────────────────────
+        agregarLista: (l) => {
+          const id = uid();
+          set((s) => ({ listas: [...s.listas, { ...l, id, items: [], creadoEn: new Date().toISOString() }] }));
+          return id;
+        },
+        actualizarLista: (id, cambios) => set((s) => ({ listas: s.listas.map((l) => (l.id === id ? { ...l, ...cambios } : l)) })),
+        eliminarLista: (id) => set((s) => ({ listas: s.listas.filter((l) => l.id !== id) })),
+        agregarItemLista: (listaId, texto, cantidad) =>
+          set((s) => ({
+            listas: s.listas.map((l) => (l.id === listaId ? { ...l, items: [...l.items, { id: uid(), texto, hecho: false, ...(cantidad ? { cantidad } : {}) }] } : l)),
+          })),
+        actualizarItemLista: (listaId, itemId, cambios) => {
+          const antes = get().listas.find((l) => l.id === listaId);
+          set((s) => ({
+            listas: s.listas.map((l) => (l.id === listaId ? { ...l, items: l.items.map((i) => (i.id === itemId ? { ...i, ...cambios } : i)) } : l)),
+          }));
+          const lista = get().listas.find((l) => l.id === listaId);
+          // lista completa: las gatitas celebran (una sola vez)
+          if (cambios.hecho && antes && lista && lista.items.length >= 2 && lista.items.every((i) => i.hecho) && !antes.items.every((i) => i.hecho)) {
+            bus.emitir({ tipo: "tarea-completada", titulo: `Lista "${lista.nombre}" completa` });
+          }
+        },
+        eliminarItemLista: (listaId, itemId) =>
+          set((s) => ({ listas: s.listas.map((l) => (l.id === listaId ? { ...l, items: l.items.filter((i) => i.id !== itemId) } : l)) })),
+        limpiarLista: (listaId, modo) =>
+          set((s) => ({
+            listas: s.listas.map((l) =>
+              l.id !== listaId ? l : { ...l, items: modo === "quitarHechos" ? l.items.filter((i) => !i.hecho) : l.items.map((i) => ({ ...i, hecho: false })) },
+            ),
+          })),
+
+        // ── Fechas importantes ────────────────────────────────────────
+        agregarFecha: (f) => set((s) => ({ fechasImportantes: [...s.fechasImportantes, { ...f, id: uid(), creadoEn: new Date().toISOString() }] })),
+        actualizarFecha: (id, cambios) => set((s) => ({ fechasImportantes: s.fechasImportantes.map((f) => (f.id === id ? { ...f, ...cambios } : f)) })),
+        eliminarFecha: (id) => set((s) => ({ fechasImportantes: s.fechasImportantes.filter((f) => f.id !== id) })),
+
+        // ── Dinero ────────────────────────────────────────────────────
+        agregarTransaccion: (t) => {
+          const id = uid();
+          set((s) => ({ transacciones: [{ ...t, id, creadoEn: new Date().toISOString() }, ...s.transacciones] }));
+          return id;
+        },
+        actualizarTransaccion: (id, cambios) => set((s) => ({ transacciones: s.transacciones.map((t) => (t.id === id ? { ...t, ...cambios } : t)) })),
+        eliminarTransaccion: (id) => set((s) => ({ transacciones: s.transacciones.filter((t) => t.id !== id) })),
+        agregarCategoria: (c) => {
+          const id = uid();
+          set((s) => ({ categoriasDinero: [...s.categoriasDinero, { ...c, id, orden: 50 + s.categoriasDinero.length }] }));
+          return id;
+        },
+        actualizarCategoria: (id, cambios) => set((s) => ({ categoriasDinero: s.categoriasDinero.map((c) => (c.id === id ? { ...c, ...cambios } : c)) })),
+        eliminarCategoria: (id) =>
+          set((s) => {
+            const cat = s.categoriasDinero.find((c) => c.id === id);
+            const destino = cat?.tipo === "ingreso" ? "cat-otros-ingreso" : "cat-otros";
+            return {
+              categoriasDinero: s.categoriasDinero.filter((c) => c.id !== id),
+              // lo registrado no se pierde: pasa a "Otros"
+              transacciones: s.transacciones.map((t) => (t.categoriaId === id ? { ...t, categoriaId: destino } : t)),
+              suscripciones: s.suscripciones.map((x) => (x.categoriaId === id ? { ...x, categoriaId: "cat-suscripciones" } : x)),
+            };
+          }),
+        agregarSuscripcion: (x) =>
+          set((s) => ({ suscripciones: [...s.suscripciones, { ...x, id: uid(), diaCobro: Number(x.proximoCobro.slice(8, 10)), creadoEn: new Date().toISOString() }] })),
+        actualizarSuscripcion: (id, cambios) =>
+          set((s) => ({
+            suscripciones: s.suscripciones.map((x) =>
+              x.id === id ? { ...x, ...cambios, ...(cambios.proximoCobro ? { diaCobro: Number(cambios.proximoCobro.slice(8, 10)) } : {}) } : x,
+            ),
+          })),
+        eliminarSuscripcion: (id) => set((s) => ({ suscripciones: s.suscripciones.filter((x) => x.id !== id) })),
+        registrarCobro: (id) => {
+          const x = get().suscripciones.find((y) => y.id === id);
+          if (!x) return;
+          get().agregarTransaccion({ tipo: "gasto", monto: x.monto, categoriaId: x.categoriaId, nota: x.nombre, fecha: x.proximoCobro, suscripcionId: x.id });
+          get().saltarCobro(id);
+        },
+        alternarDiaPeriodo: (dia) =>
+          set((s) => ({ diasPeriodo: s.diasPeriodo.includes(dia) ? s.diasPeriodo.filter((d) => d !== dia) : [...s.diasPeriodo, dia].sort() })),
+        saltarCobro: (id) =>
+          set((s) => ({
+            suscripciones: s.suscripciones.map((x) => (x.id === id ? { ...x, proximoCobro: siguienteCobro(x.proximoCobro, x.frecuencia, x.diaCobro) } : x)),
+          })),
 
         // ── Asistente ─────────────────────────────────────────────────
         crearConversacion: (modo) => {
@@ -316,6 +453,21 @@ export const useNekoStore = create<EstadoNeko>()(
           set((s) => ({ bebidas: s.bebidas.map((b) => (b.id === id ? { ...b, ...cambios } : b)) })),
 
         agregarTipoBebida: (b) => set((s) => ({ bebidas: [...s.bebidas, { ...b, id: uid() }] })),
+        // se esconde (no se borra): así se puede volver a mostrar y su historial se conserva
+        eliminarTipoBebida: (id) =>
+          set((s) => (id === "agua" ? {} : { bebidas: s.bebidas.map((b) => (b.id === id ? { ...b, oculta: true } : b)) })),
+        // borrar de verdad: lo que ya tomaste sigue contando para tus días pasados
+        borrarTipoBebida: (id) => set((s) => (id === "agua" ? {} : { bebidas: s.bebidas.filter((b) => b.id !== id) })),
+        moverBebida: (id, direccion) =>
+          set((s) => {
+            const lista = [...s.bebidas];
+            const i = lista.findIndex((b) => b.id === id);
+            let j = i + direccion;
+            while (j >= 0 && j < lista.length && lista[j].oculta) j += direccion; // salta las escondidas
+            if (i < 0 || j < 0 || j >= lista.length) return {};
+            [lista[i], lista[j]] = [lista[j], lista[i]];
+            return { bebidas: lista };
+          }),
 
         // ── Hábitos ───────────────────────────────────────────────────
         agregarHabito: (h) =>
@@ -388,6 +540,16 @@ export const useNekoStore = create<EstadoNeko>()(
           return true;
         },
 
+        comprarDecoracion: (clave) => {
+          const s = get();
+          const item = CATALOGO_DECORACION.find((a) => a.clave === clave);
+          if (!item || decoracionPropia(s).includes(clave) || s.croquetas < item.precio) return false;
+          set({ decoracion: [...s.decoracion, clave] });
+          ganar(-item.precio, `Para la sala: ${item.nombre}`);
+          bus.emitir({ tipo: "compra", nombre: item.nombre });
+          return true;
+        },
+
         equiparAccesorio: (gatita, clave) =>
           set((s) => ({
             gatitas: s.gatitas.map((g) => {
@@ -450,7 +612,7 @@ export const useNekoStore = create<EstadoNeko>()(
     },
     {
       name: "nekotask-v1",
-      version: 4,
+      version: 8,
       migrate: (guardado, version) => {
         const s = guardado as Partial<EstadoNeko>;
         if (version < 2 && s.bebidas) {
@@ -469,6 +631,26 @@ export const useNekoStore = create<EstadoNeko>()(
         }
         if (version < 4 && s.ajustes) {
           s.ajustes = { ...s.ajustes, recordatorios: s.ajustes.recordatorios ?? RECORDATORIOS_INICIALES };
+        }
+        if (version < 5) {
+          s.listas ??= LISTAS_INICIALES;
+          s.fechasImportantes ??= [];
+          if (s.ajustes?.recordatorios && !s.ajustes.recordatorios.fechas) {
+            s.ajustes = { ...s.ajustes, recordatorios: { ...s.ajustes.recordatorios, fechas: RECORDATORIOS_INICIALES.fechas } };
+          }
+        }
+        if (version < 6) {
+          s.transacciones ??= [];
+          s.categoriasDinero ??= CATEGORIAS_INICIALES;
+          s.suscripciones ??= [];
+          if (s.ajustes?.recordatorios && !s.ajustes.recordatorios.dinero) {
+            s.ajustes = { ...s.ajustes, recordatorios: { ...s.ajustes.recordatorios, dinero: RECORDATORIOS_INICIALES.dinero } };
+          }
+        }
+        if (version < 7) s.diasPeriodo ??= [];
+        if (version < 8) {
+          // la tienda de accesorios se volvió "Cosas para la sala": lo comprado pasa a su equivalente
+          s.decoracion = [...new Set([...(s.decoracion ?? []), ...(s.accesoriosComprados ?? []).map((a) => DE_ACCESORIO[a]).filter(Boolean)])];
         }
         return s as EstadoNeko;
       },

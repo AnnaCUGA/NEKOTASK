@@ -169,8 +169,10 @@ function Hora({ id, valor, alCambiar, etiqueta }: { id: string; valor: string; a
 function SeccionRecordatorios() {
   const r = useNekoStore((s) => s.ajustes.recordatorios);
   const ajustar = useNekoStore((s) => s.actualizarAjustes);
-  const cambiar = <K extends keyof ConfigRecordatorios>(k: K, v: Partial<ConfigRecordatorios[K]>) =>
+  const cambiar = <K extends "agua" | "rutinas" | "tareas" | "gatitas">(k: K, v: Partial<ConfigRecordatorios[K]>) =>
     ajustar({ recordatorios: { ...r, [k]: { ...r[k], ...v } } });
+  const fechas = r.fechas ?? { activo: true, hora: "09:00" };
+  const dinero = r.dinero ?? { activo: true, hora: "10:00" };
   return (
     <Bloque titulo="Recordatorios" icono="reloj">
       <div className="space-y-2 border-b border-noche-600 pb-3">
@@ -217,6 +219,14 @@ function SeccionRecordatorios() {
             <p className="pl-1 text-xs text-white/45">A las 8 p. m. te recuerda si falta registrar comida, agua fresca o arenero.</p>
           </>
         )}
+      </div>
+      <div className="space-y-2 border-t border-noche-600 pt-3">
+        <Interruptor id="rec-fechas" etiqueta="Fechas importantes (Bizca)" activo={fechas.activo} alCambiar={(v) => ajustar({ recordatorios: { ...r, fechas: { ...fechas, activo: v } } })} />
+        {fechas.activo && <Hora id="rec-fechas-hora" etiqueta="Avisarme a las" valor={fechas.hora} alCambiar={(v) => ajustar({ recordatorios: { ...r, fechas: { ...fechas, hora: v } } })} />}
+      </div>
+      <div className="space-y-2 border-t border-noche-600 pt-3">
+        <Interruptor id="rec-dinero" etiqueta="Cobros de suscripciones (Mango)" activo={dinero.activo} alCambiar={(v) => ajustar({ recordatorios: { ...r, dinero: { ...dinero, activo: v } } })} />
+        {dinero.activo && <Hora id="rec-dinero-hora" etiqueta="Avisarme a las" valor={dinero.hora} alCambiar={(v) => ajustar({ recordatorios: { ...r, dinero: { ...dinero, hora: v } } })} />}
       </div>
     </Bloque>
   );

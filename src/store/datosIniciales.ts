@@ -1,10 +1,12 @@
-import type { Ajustes, ConfigRecordatorios, EventoCalendario, Gatita, Habito, Tarea, TipoBebida } from "@/lib/tipos";
+import type { Ajustes, CategoriaDinero, ConfigRecordatorios, EventoCalendario, Gatita, Habito, Lista, Tarea, TipoBebida } from "@/lib/tipos";
 
 export const RECORDATORIOS_INICIALES: ConfigRecordatorios = {
   agua: { activo: true, cadaMin: 90, desde: "09:00", hasta: "21:00" },
   rutinas: { activo: true, manana: "08:00", noche: "22:00" },
   tareas: { activo: true, minutosAntes: 15 },
   gatitas: { activo: true, hora: "09:00" },
+  fechas: { activo: true, hora: "09:00" },
+  dinero: { activo: true, hora: "10:00" },
 };
 
 export const AJUSTES_INICIALES: Ajustes = {
@@ -108,3 +110,35 @@ export function eventosEjemplo(): EventoCalendario[] {
     { id: "ej-5", titulo: "Entrega de reporte", inicio: diaA(3, 12), fin: diaA(3, 13), origen: "ejemplo" },
   ];
 }
+
+/** Listas de arranque — ids fijos para que no se dupliquen al sincronizar varios dispositivos */
+export const LISTAS_INICIALES: Lista[] = [
+  { id: "lista-super", nombre: "Súper", icono: "carrito", color: "#9cc96b", items: [], creadoEn: ahora },
+  { id: "lista-gatitas", nombre: "Para las gatitas", icono: "huella", color: "#e8a85b", items: [
+    { id: "lg-1", texto: "Croquetas", hecho: false },
+    { id: "lg-2", texto: "Arena", hecho: false },
+  ], creadoEn: ahora },
+  { id: "lista-pelis", nombre: "Pelis y series", icono: "pelicula", color: "#f472b6", items: [], creadoEn: ahora },
+  { id: "lista-libros", nombre: "Libros", icono: "libro", color: "#67e8f9", items: [], creadoEn: ahora },
+];
+
+/**
+ * Categorías de dinero — ids fijos (no se duplican entre dispositivos).
+ * Colores: paleta categórica validada para el fondo oscuro (orden fijo), "Otros" en gris neutro.
+ */
+export const COLORES_DINERO = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+export const CATEGORIAS_INICIALES: CategoriaDinero[] = [
+  { id: "cat-comida", nombre: "Comida", icono: "plato", color: COLORES_DINERO[0], tipo: "gasto", orden: 1 },
+  { id: "cat-super", nombre: "Súper", icono: "carrito", color: COLORES_DINERO[1], tipo: "gasto", orden: 2 },
+  { id: "cat-transporte", nombre: "Transporte", icono: "auto", color: COLORES_DINERO[2], tipo: "gasto", orden: 3 },
+  { id: "cat-casa", nombre: "Casa y servicios", icono: "casa", color: COLORES_DINERO[3], tipo: "gasto", orden: 4 },
+  { id: "cat-gatitas", nombre: "Gatitas", icono: "huella", color: COLORES_DINERO[4], tipo: "gasto", orden: 5 },
+  { id: "cat-salud", nombre: "Salud", icono: "pastilla", color: COLORES_DINERO[5], tipo: "gasto", orden: 6 },
+  { id: "cat-antojos", nombre: "Antojos y salidas", icono: "cafe", color: COLORES_DINERO[6], tipo: "gasto", orden: 7 },
+  { id: "cat-suscripciones", nombre: "Suscripciones", icono: "sincronizar", color: COLORES_DINERO[7], tipo: "gasto", orden: 8 },
+  { id: "cat-otros", nombre: "Otros", icono: "etiqueta", color: "#8b86a3", tipo: "gasto", orden: 99 },
+  { id: "cat-sueldo", nombre: "Sueldo", icono: "dinero", color: COLORES_DINERO[0], tipo: "ingreso", orden: 1 },
+  { id: "cat-extra", nombre: "Extras", icono: "chispa", color: COLORES_DINERO[2], tipo: "ingreso", orden: 2 },
+  { id: "cat-regalo", nombre: "Regalos", icono: "regalo", color: COLORES_DINERO[6], tipo: "ingreso", orden: 3 },
+  { id: "cat-otros-ingreso", nombre: "Otros ingresos", icono: "etiqueta", color: "#8b86a3", tipo: "ingreso", orden: 99 },
+];

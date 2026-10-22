@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { Gatita } from "@/components/gatitas/Gatita";
 import { IconoNeko } from "@/components/iconos/IconoNeko";
 import { bus } from "@/lib/eventos";
 import { mayusculaInicial, saludo } from "@/lib/fechas";
@@ -9,17 +10,16 @@ import { tilin } from "@/lib/sonidos";
 import { useSync } from "@/lib/sync/motor";
 import { useNekoStore } from "@/store/useNekoStore";
 
+/** Logo: Blanquita saludando sobre el degradado de la app (el mismo del ícono instalado) */
 export function Logo({ tamano = 40 }: { tamano?: number }) {
   return (
-    <svg width={tamano} height={tamano} viewBox="0 0 48 48" aria-hidden>
-      <rect x="2" y="2" width="44" height="44" rx="14" fill="#1e1c27" stroke="#a78bfa" strokeWidth="2" />
-      <path d="M11 22 L13 9 L21 16 Z M37 22 L35 9 L27 16 Z" fill="#f9a8d4" stroke="#2b2233" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M9 27 C9 18 15 14 24 14 C33 14 39 18 39 27 C39 35 32 39 24 39 C16 39 9 35 9 27 Z" fill="#f7f3ef" stroke="#2b2233" strokeWidth="2.2" />
-      <path d="M16 26 q2.5 -3 5 0 M27 26 q2.5 -3 5 0" fill="none" stroke="#2b2233" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M22.5 29.5 h3 l-1.5 1.8 z" fill="#f29bb0" stroke="#2b2233" strokeWidth="1" strokeLinejoin="round" />
-      <path d="M24 31.3 q-1.6 2.2 -3.2 1 M24 31.3 q1.6 2.2 3.2 1" fill="none" stroke="#2b2233" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M13 30 h3 M32 30 h3" stroke="#ff8fb1" strokeWidth="2.4" strokeLinecap="round" opacity=".7" />
-    </svg>
+    <span
+      aria-hidden
+      className="relative inline-flex shrink-0 items-end justify-center overflow-hidden bg-gradient-to-b from-[#8b5cf6] to-[#f472b6] shadow-neon"
+      style={{ width: tamano, height: tamano, borderRadius: tamano * 0.28 }}
+    >
+      <Gatita clave="blanquita" expresion="feliz" ancho={tamano * 1.05} halo={false} className="-mb-[2%]" />
+    </span>
   );
 }
 
