@@ -2,7 +2,7 @@
  * - Funciona sin internet: guarda la app y abre la última versión conocida.
  * - Recibe notificaciones push con los recordatorios de las gatitas.
  */
-const VERSION = "neko-v2"; // súbela cuando cambien íconos o sprites para que el celular los renueve
+const VERSION = "neko-v3"; // súbela cuando cambien íconos o sprites para que el celular los renueve
 const ESTATICOS = `${VERSION}-estaticos`;
 const PAGINAS = `${VERSION}-paginas`;
 const INICIO = ["/", "/manifest.webmanifest", "/iconos/icono-192.png", "/iconos/insignia-96.png"];
@@ -27,7 +27,7 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.startsWith("/api/")) return;               // datos siempre frescos
 
   // archivos con huella (_next/static, íconos): primero caché
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/iconos/")) {
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/iconos/") || url.pathname.startsWith("/sprites/")) {
     e.respondWith(
       caches.match(req).then((g) => g || fetch(req).then((r) => {
         const copia = r.clone();
