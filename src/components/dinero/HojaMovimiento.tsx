@@ -13,12 +13,15 @@ import { hoyISO, sumarDias } from "@/lib/fechas";
 import type { TipoTransaccion, Transaccion } from "@/lib/tipos";
 import { useNekoStore } from "@/store/useNekoStore";
 
+/** Valores para abrir la hoja ya llenita (p. ej. desde la lista del súper) */
+export interface Borrador { monto?: number; categoriaId?: string; nota?: string }
+
 // ─── Estado de la interfaz de Dinero (no se guarda) ──────────────────────
 interface UIDinero {
-  hoja: { tipo: TipoTransaccion; editar?: Transaccion } | null;
+  hoja: { tipo: TipoTransaccion; editar?: Transaccion; borrador?: Borrador } | null;
   aviso: { texto: string; tono: "bien" | "cerca" | "pasado" } | null;
   filtroCategoria: string | null;
-  abrir: (tipo: TipoTransaccion, editar?: Transaccion) => void;
+  abrir: (tipo: TipoTransaccion, editar?: Transaccion, borrador?: Borrador) => void;
   cerrar: () => void;
   avisar: (texto: string, tono: "bien" | "cerca" | "pasado") => void;
   setFiltroCategoria: (id: string | null) => void;
@@ -27,7 +30,7 @@ export const useUIDinero = create<UIDinero>((set) => ({
   hoja: null,
   aviso: null,
   filtroCategoria: null,
-  abrir: (tipo, editar) => set({ hoja: { tipo, editar } }),
+  abrir: (tipo, editar, borrador) => set({ hoja: { tipo, editar, borrador } }),
   cerrar: () => set({ hoja: null }),
   avisar: (texto, tono) => set({ aviso: { texto, tono } }),
   setFiltroCategoria: (id) => set({ filtroCategoria: id }),
@@ -44,7 +47,7 @@ export function AnfitrionDinero() {
   }, [aviso]);
   return (
     <>
-      <AnimatePresence>{hoja && <HojaMovimiento key="hoja" tipoInicial={hoja.tipo} editar={hoja.editar} />}</AnimatePresence>
+      <AnimatePresence>{hoja && <HojaMovimiento key="hoja" tipoInicial={hoja.tipo} editar={hoja.editar} borrador={hoja.borrador} />}</AnimatePresence>
       <AnimatePresence>
         {aviso && (
           <motion.div
@@ -61,7 +64,7 @@ export function AnfitrionDinero() {
   );
 }
 
-function HojaMovimiento({ tipoInicial, editar }: { tipoInicial: TipoTransaccion; editar?: Transaccion }) {
+function HojaMovimiento({ tipoInicial, editar, borrador }: { tipoInicial: TipoTransaccion; editar?: Transaccion; borrador?: Borrador }) {
   const cerrar = useUIDinero((s) => s.cerrar);
   const avisar = useUIDinero((s) => s.avisar);
   const categorias = useNekoStore((s) => s.categoriasDinero);
@@ -69,9 +72,9 @@ function HojaMovimiento({ tipoInicial, editar }: { tipoInicial: TipoTransaccion;
   const actualizar = useNekoStore((s) => s.actualizarTransaccion);
   const eliminar = useNekoStore((s) => s.eliminarTransaccion);
   const [tipo, setTipo] = useState<TipoTransaccion>(editar?.tipo ?? tipoInicial);
-  const [monto, setMonto] = useState(editar ? String(editar.monto) : "");
-  const [categoriaId, setCategoriaId] = useState(editar?.categoriaId ?? "");
-  const [nota, setNota] = useState(editar?.nota ?? "");
+  const [monto, setMonto] = useState(editar ? String(editar.monto) : borrador?.monto ? String(borrador.monto) : "");
+  const [categoriaId, setCategoriaId] = useState(editar?.categoriaId ?? borrador?.categoriaId ?? "");
+  const [nota, setNota] = useState(editar?.nota ?? borrador?.nota ?? "");
   const [fecha, setFecha] = useState(editar?.fecha ?? hoyISO());
   const [confirmar, setConfirmar] = useState(false);
   const caja = useRef<HTMLInputElement>(null);

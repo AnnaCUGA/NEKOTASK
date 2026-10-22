@@ -106,7 +106,14 @@ export interface Nota {
   actualizadoEn?: string;
 }
 
-export interface ItemLista { id: string; texto: string; hecho: boolean; cantidad?: string }
+export interface ItemLista {
+  id: string;
+  texto: string;
+  hecho: boolean;
+  cantidad?: string;
+  piezas?: number;          // cuántas (para el precio)
+  precio?: number;          // precio por pieza en MXN
+}
 
 export interface Lista {
   id: string;
@@ -114,6 +121,7 @@ export interface Lista {
   icono: NombreIcono;
   color: string;
   items: ItemLista[];
+  conPrecios?: boolean;     // lleva la cuenta de cuánto cuesta cada cosa
   creadoEn: string;
 }
 

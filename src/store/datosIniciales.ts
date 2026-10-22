@@ -113,8 +113,8 @@ export function eventosEjemplo(): EventoCalendario[] {
 
 /** Listas de arranque — ids fijos para que no se dupliquen al sincronizar varios dispositivos */
 export const LISTAS_INICIALES: Lista[] = [
-  { id: "lista-super", nombre: "Súper", icono: "carrito", color: "#9cc96b", items: [], creadoEn: ahora },
-  { id: "lista-gatitas", nombre: "Para las gatitas", icono: "huella", color: "#e8a85b", items: [
+  { id: "lista-super", nombre: "Súper", icono: "carrito", color: "#9cc96b", items: [], conPrecios: true, creadoEn: ahora },
+  { id: "lista-gatitas", nombre: "Para las gatitas", icono: "huella", color: "#e8a85b", conPrecios: true, items: [
     { id: "lg-1", texto: "Croquetas", hecho: false },
     { id: "lg-2", texto: "Arena", hecho: false },
   ], creadoEn: ahora },

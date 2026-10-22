@@ -86,10 +86,10 @@ interface EstadoNeko {
   alternarFijada: (id: string) => void;
   actualizarNota: (id: string, cambios: Partial<Pick<Nota, "titulo" | "contenido" | "etiquetas">>) => void;
   // listas
-  agregarLista: (l: Pick<Lista, "nombre" | "icono" | "color">) => string;
-  actualizarLista: (id: string, cambios: Partial<Pick<Lista, "nombre" | "icono" | "color">>) => void;
+  agregarLista: (l: Pick<Lista, "nombre" | "icono" | "color" | "conPrecios">) => string;
+  actualizarLista: (id: string, cambios: Partial<Pick<Lista, "nombre" | "icono" | "color" | "conPrecios">>) => void;
   eliminarLista: (id: string) => void;
-  agregarItemLista: (listaId: string, texto: string, cantidad?: string) => void;
+  agregarItemLista: (listaId: string, texto: string, extra?: Pick<ItemLista, "piezas" | "precio">) => void;
   actualizarItemLista: (listaId: string, itemId: string, cambios: Partial<Omit<ItemLista, "id">>) => void;
   eliminarItemLista: (listaId: string, itemId: string) => void;
   limpiarLista: (listaId: string, modo: "quitarHechos" | "desmarcar") => void;
@@ -261,9 +261,9 @@ export const useNekoStore = create<EstadoNeko>()(
         },
         actualizarLista: (id, cambios) => set((s) => ({ listas: s.listas.map((l) => (l.id === id ? { ...l, ...cambios } : l)) })),
         eliminarLista: (id) => set((s) => ({ listas: s.listas.filter((l) => l.id !== id) })),
-        agregarItemLista: (listaId, texto, cantidad) =>
+        agregarItemLista: (listaId, texto, extra) =>
           set((s) => ({
-            listas: s.listas.map((l) => (l.id === listaId ? { ...l, items: [...l.items, { id: uid(), texto, hecho: false, ...(cantidad ? { cantidad } : {}) }] } : l)),
+            listas: s.listas.map((l) => (l.id === listaId ? { ...l, items: [...l.items, { id: uid(), texto, hecho: false, ...(extra?.piezas ? { piezas: extra.piezas } : {}), ...(extra?.precio ? { precio: extra.precio } : {}) }] } : l)),
           })),
         actualizarItemLista: (listaId, itemId, cambios) => {
           const antes = get().listas.find((l) => l.id === listaId);
@@ -612,7 +612,7 @@ export const useNekoStore = create<EstadoNeko>()(
     },
     {
       name: "nekotask-v1",
-      version: 8,
+      version: 9,
       migrate: (guardado, version) => {
         const s = guardado as Partial<EstadoNeko>;
         if (version < 2 && s.bebidas) {
@@ -651,6 +651,10 @@ export const useNekoStore = create<EstadoNeko>()(
         if (version < 8) {
           // la tienda de accesorios se volvió "Cosas para la sala": lo comprado pasa a su equivalente
           s.decoracion = [...new Set([...(s.decoracion ?? []), ...(s.accesoriosComprados ?? []).map((a) => DE_ACCESORIO[a]).filter(Boolean)])];
+        }
+        if (version < 9) {
+          // las listas de compras empiezan llevando la cuenta de precios
+          s.listas = s.listas?.map((l) => (l.id === "lista-super" || l.id === "lista-gatitas" ? { ...l, conPrecios: l.conPrecios ?? true } : l));
         }
         return s as EstadoNeko;
       },
