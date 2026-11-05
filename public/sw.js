@@ -72,7 +72,6 @@ self.addEventListener("push", (e) => {
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   let destino = (e.notification.data && e.notification.data.url) || "/";
-  if (e.action === "agua-250") destino = "/?accion=agua&ml=250";
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ventanas) => {
       const abierta = ventanas.find((v) => new URL(v.url).origin === self.location.origin);
