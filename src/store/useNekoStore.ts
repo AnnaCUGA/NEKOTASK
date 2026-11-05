@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { almacenamientoSeguro } from "@/lib/almacenamiento";
 import { bus } from "@/lib/eventos";
+import type { AccesoCifrado, MetaBoveda } from "@/lib/boveda/cripto";
 import { siguienteCobro } from "@/lib/dinero";
 import { esHoy, hoyISO, sumarDias, uid } from "@/lib/fechas";
 import type {
@@ -70,6 +71,9 @@ interface EstadoNeko {
   categoriasDinero: CategoriaDinero[];
   suscripciones: Suscripcion[];
   diasPeriodo: string[];
+  /** Bóveda de accesos: SOLO datos cifrados (la llave nunca se guarda aquí) */
+  bovedaMeta: MetaBoveda[];
+  accesosCifrados: AccesoCifrado[];
   conversaciones: Conversacion[];
   pomodoro: EstadoPomodoro;
 
@@ -110,6 +114,11 @@ interface EstadoNeko {
   registrarCobro: (id: string) => void;
   // ciclo
   alternarDiaPeriodo: (dia: string) => void;
+  // bóveda (todo llega ya cifrado)
+  guardarMetaBoveda: (m: MetaBoveda) => void;
+  guardarAccesoCifrado: (c: AccesoCifrado) => void;
+  eliminarAccesoCifrado: (id: string) => void;
+  borrarBoveda: () => void;
   saltarCobro: (id: string) => void;
   // asistente
   crearConversacion: (modo: ModoIA) => string;
@@ -224,6 +233,8 @@ export const useNekoStore = create<EstadoNeko>()(
         categoriasDinero: CATEGORIAS_INICIALES,
         suscripciones: [],
         diasPeriodo: [],
+        bovedaMeta: [],
+        accesosCifrados: [],
         conversaciones: [],
 
         // ── Calendario ────────────────────────────────────────────────
@@ -330,6 +341,11 @@ export const useNekoStore = create<EstadoNeko>()(
           get().agregarTransaccion({ tipo: "gasto", monto: x.monto, categoriaId: x.categoriaId, nota: x.nombre, fecha: x.proximoCobro, suscripcionId: x.id });
           get().saltarCobro(id);
         },
+        guardarMetaBoveda: (m) => set({ bovedaMeta: [m] }),
+        guardarAccesoCifrado: (c) =>
+          set((s) => ({ accesosCifrados: s.accesosCifrados.some((x) => x.id === c.id) ? s.accesosCifrados.map((x) => (x.id === c.id ? c : x)) : [...s.accesosCifrados, c] })),
+        eliminarAccesoCifrado: (id) => set((s) => ({ accesosCifrados: s.accesosCifrados.filter((x) => x.id !== id) })),
+        borrarBoveda: () => set({ bovedaMeta: [], accesosCifrados: [] }),
         alternarDiaPeriodo: (dia) =>
           set((s) => ({ diasPeriodo: s.diasPeriodo.includes(dia) ? s.diasPeriodo.filter((d) => d !== dia) : [...s.diasPeriodo, dia].sort() })),
         saltarCobro: (id) =>
@@ -612,7 +628,7 @@ export const useNekoStore = create<EstadoNeko>()(
     },
     {
       name: "nekotask-v1",
-      version: 9,
+      version: 10,
       migrate: (guardado, version) => {
         const s = guardado as Partial<EstadoNeko>;
         if (version < 2 && s.bebidas) {
@@ -656,6 +672,7 @@ export const useNekoStore = create<EstadoNeko>()(
           // las listas de compras empiezan llevando la cuenta de precios
           s.listas = s.listas?.map((l) => (l.id === "lista-super" || l.id === "lista-gatitas" ? { ...l, conPrecios: l.conPrecios ?? true } : l));
         }
+        if (version < 10) { s.bovedaMeta ??= []; s.accesosCifrados ??= []; }
         return s as EstadoNeko;
       },
       storage: createJSONStorage(() => almacenamientoSeguro),

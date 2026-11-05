@@ -242,4 +242,5 @@ export type NombreIcono =
   | "etiqueta" | "cerrar" | "chispa" | "libro" | "pesa" | "tienda" | "casa"
   | "ajustes" | "flecha" | "bocina" | "silencio" | "lista"
   | "copiar" | "enviar" | "detener" | "google" | "sincronizar" | "izquierda" | "derecha"
-  | "regalo" | "dinero" | "buscar" | "fijar" | "lapiz" | "carrito" | "pelicula" | "carpeta" | "bienestar" | "anillo" | "documento" | "auto" | "ingreso" | "gasto" | "grafica" | "flor" | "ojo" | "ojoCerrado" | "leche" | "botella";
+  | "regalo" | "dinero" | "buscar" | "fijar" | "lapiz" | "carrito" | "pelicula" | "carpeta" | "bienestar" | "anillo" | "documento" | "auto" | "ingreso" | "gasto" | "grafica" | "flor" | "ojo" | "ojoCerrado" | "leche" | "botella"
+  | "candado" | "abierto" | "huellaDigital" | "pegar" | "dado" | "escudo" | "enlace";

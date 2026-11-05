@@ -26,6 +26,7 @@ import { SeccionCalendario } from "@/components/calendario/SeccionCalendario";
 import { Gatita } from "@/components/gatitas/Gatita";
 import { SeccionNotas } from "@/components/organizar/SeccionNotas";
 import { SeccionListas } from "@/components/organizar/SeccionListas";
+import { SeccionAccesos } from "@/components/organizar/SeccionAccesos";
 import { ProximasFechas, SeccionFechas } from "@/components/organizar/SeccionFechas";
 import { SeccionCiclo } from "@/components/bienestar/SeccionCiclo";
 import { AnfitrionDinero, useUIDinero } from "@/components/dinero/HojaMovimiento";
@@ -33,7 +34,7 @@ import { ResumenDinero } from "@/components/dinero/ResumenDinero";
 import { Movimientos, Presupuesto, Suscripciones } from "@/components/dinero/GestionDinero";
 
 export type Pantalla =
-  | "hoy" | "tareas" | "calendario" | "notas" | "listas" | "fechas"
+  | "hoy" | "tareas" | "calendario" | "notas" | "listas" | "fechas" | "accesos"
   | "habitos" | "agua" | "ciclo" | "dinero" | "movimientos" | "presupuesto" | "suscripciones" | "gatitas" | "asistente";
 type Grupo = "hoy" | "organizar" | "bienestar" | "dinero" | "gatitas";
 
@@ -44,6 +45,7 @@ const PANTALLAS: Record<Pantalla, { nombre: string; icono: NombreIcono; grupo: G
   notas: { nombre: "Notas", icono: "nota", grupo: "organizar" },
   listas: { nombre: "Listas", icono: "lista", grupo: "organizar" },
   fechas: { nombre: "Fechas", icono: "regalo", grupo: "organizar" },
+  accesos: { nombre: "Accesos", icono: "candado", grupo: "organizar" },
   habitos: { nombre: "Hábitos", icono: "racha", grupo: "bienestar" },
   agua: { nombre: "Agua", icono: "agua", grupo: "bienestar" },
   ciclo: { nombre: "Ciclo", icono: "flor", grupo: "bienestar" },
@@ -57,7 +59,7 @@ const PANTALLAS: Record<Pantalla, { nombre: string; icono: NombreIcono; grupo: G
 
 const GRUPOS: { id: Grupo; nombre: string; icono: NombreIcono; pantallas: Pantalla[] }[] = [
   { id: "hoy", nombre: "Hoy", icono: "casa", pantallas: ["hoy"] },
-  { id: "organizar", nombre: "Organizar", icono: "carpeta", pantallas: ["tareas", "calendario", "notas", "listas", "fechas"] },
+  { id: "organizar", nombre: "Organizar", icono: "carpeta", pantallas: ["tareas", "calendario", "notas", "listas", "fechas", "accesos"] },
   { id: "bienestar", nombre: "Bienestar", icono: "bienestar", pantallas: ["habitos", "agua", "ciclo"] },
   { id: "dinero", nombre: "Dinero", icono: "dinero", pantallas: ["dinero", "movimientos", "presupuesto", "suscripciones"] },
   { id: "gatitas", nombre: "Gatitas", icono: "huella", pantallas: ["gatitas"] },
@@ -191,6 +193,7 @@ function Contenido({ pantalla, irA }: { pantalla: Pantalla; irA: (p: Pantalla) =
     case "notas": return <SeccionNotas />;
     case "listas": return <SeccionListas />;
     case "fechas": return <SeccionFechas />;
+    case "accesos": return <SeccionAccesos />;
     case "habitos": return <div className="mx-auto max-w-3xl"><PanelHabitos /></div>;
     case "agua": return <div className="mx-auto max-w-3xl"><PanelHidratacion /></div>;
     case "ciclo": return <SeccionCiclo />;
