@@ -57,6 +57,7 @@ export const COLECCIONES: DefColeccion[] = [
   // bóveda: solo viaja lo cifrado (sal, llave envuelta y accesos cifrados)
   { clave: "bovedaMeta", tipo: "lista", id: porId },
   { clave: "accesosCifrados", tipo: "lista", id: porId },
+  { clave: "carpetasCifradas", tipo: "lista", id: porId },
   { clave: "conversaciones", tipo: "lista", id: porId, nuevosAlInicio: true },
   {
     clave: "ajustes",

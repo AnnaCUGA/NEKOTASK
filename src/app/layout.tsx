@@ -7,7 +7,7 @@ const cuerpo = Nunito({ subsets: ["latin"], weight: ["400", "600", "700", "800"]
 
 export const metadata: Metadata = {
   title: "NekoTask Studio",
-  description: "Tareas, hábitos e hidratación con Blanquita, Bizca, Mango y Ronro.",
+  description: "Tareas, hábitos, dinero y calendario con Blanquita, Bizca, Mango y Ronro.",
   applicationName: "NekoTask Studio",
   appleWebApp: { capable: true, title: "NekoTask", statusBarStyle: "black-translucent" },
   icons: { icon: "/iconos/icono-192.png", apple: "/iconos/apple-touch-icon.png" },

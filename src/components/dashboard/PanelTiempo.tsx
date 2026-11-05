@@ -105,7 +105,7 @@ export function PanelTiempoLibre() {
         </ul>
       )}
       <p className="mt-2 text-[11px] text-white/45">
-        {mucho ? "Ronro sugiere guardar un ratito para descansar." : r.libreMin < 30 ? "Día lleno. Prioriza lo urgente y toma agua." : "Buen equilibrio para hoy."}
+        {mucho ? "Ronro sugiere guardar un ratito para descansar." : r.libreMin < 30 ? "Día lleno. Prioriza lo urgente." : "Buen equilibrio para hoy."}
       </p>
     </Panel>
   );

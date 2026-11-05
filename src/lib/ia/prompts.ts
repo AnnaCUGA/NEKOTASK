@@ -72,7 +72,7 @@ No escribas nada después del bloque.`,
     nombre: "Planear mi día",
     icono: "calendario",
     ayuda: "Cuéntale cómo te sientes o qué es lo más importante hoy…",
-    instruccion: `Con el contexto de la app (tareas pendientes, calendario, tiempo libre, hábitos e hidratación), arma un plan realista para lo que queda del día.
+    instruccion: `Con el contexto de la app (tareas pendientes, calendario, tiempo libre, hábitos y dinero), arma un plan realista para lo que queda del día.
 Formato: ## Tu plan con una lista de bloques "HH:MM – HH:MM · actividad", respetando los eventos del calendario y dejando descansos. Luego ## Si te da tiempo, y una frase final de ánimo. Prioriza urgente y alta. Si el día está muy lleno, dilo y sugiere qué mover.`,
     sugerencias: ["Planea mi tarde, estoy algo cansada", "¿Qué debería hacer primero hoy?"],
     usaContexto: true,

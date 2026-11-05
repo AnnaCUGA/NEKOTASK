@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const enviados = await enviarAUsuaria(db, usuario, {
     clave: `prueba-${Date.now()}`,
     titulo: "¡Miau! Las notificaciones funcionan",
-    cuerpo: "Así te avisaremos del agua, tus rutinas, tus tareas y tus gatitas.",
+    cuerpo: "Así te avisaremos de tus rutinas, tareas, fechas y gatitas.",
     gatita: "bizca",
     url: "/",
   });

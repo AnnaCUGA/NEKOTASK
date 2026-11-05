@@ -6,6 +6,7 @@ import { almacenamientoSeguro } from "@/lib/almacenamiento";
 import { bus } from "@/lib/eventos";
 import type { AccesoCifrado, MetaBoveda } from "@/lib/boveda/cripto";
 import { siguienteCobro } from "@/lib/dinero";
+import { normalizarColumnas } from "@/lib/kanban";
 import { esHoy, hoyISO, sumarDias, uid } from "@/lib/fechas";
 import type {
   Ajustes, CategoriaDinero, CitaGatita, ClaveDecoracion, FechaImportante, Suscripcion, Transaccion, ItemLista, Lista, ClaveAccesorio, ClaveGatita, Conversacion, EntradaTiempo, EventoCalendario, Gatita, Habito,
@@ -74,6 +75,7 @@ interface EstadoNeko {
   /** Bóveda de accesos: SOLO datos cifrados (la llave nunca se guarda aquí) */
   bovedaMeta: MetaBoveda[];
   accesosCifrados: AccesoCifrado[];
+  carpetasCifradas: AccesoCifrado[];
   conversaciones: Conversacion[];
   pomodoro: EstadoPomodoro;
 
@@ -118,6 +120,8 @@ interface EstadoNeko {
   guardarMetaBoveda: (m: MetaBoveda) => void;
   guardarAccesoCifrado: (c: AccesoCifrado) => void;
   eliminarAccesoCifrado: (id: string) => void;
+  guardarCarpetaCifrada: (c: AccesoCifrado) => void;
+  eliminarCarpetaCifrada: (id: string) => void;
   borrarBoveda: () => void;
   saltarCobro: (id: string) => void;
   // asistente
@@ -129,6 +133,8 @@ interface EstadoNeko {
   // tareas
   agregarTarea: (t: NuevaTarea) => void;
   alternarTarea: (id: string) => void;
+  moverTarea: (id: string, columnaId: string) => void;
+  agregarTareaEnColumna: (titulo: string, columnaId: string) => void;
   eliminarTarea: (id: string) => void;
   alternarChecklist: (tareaId: string, itemId: string) => void;
   agregarChecklist: (tareaId: string, texto: string) => void;
@@ -235,6 +241,7 @@ export const useNekoStore = create<EstadoNeko>()(
         diasPeriodo: [],
         bovedaMeta: [],
         accesosCifrados: [],
+        carpetasCifradas: [],
         conversaciones: [],
 
         // ── Calendario ────────────────────────────────────────────────
@@ -345,7 +352,10 @@ export const useNekoStore = create<EstadoNeko>()(
         guardarAccesoCifrado: (c) =>
           set((s) => ({ accesosCifrados: s.accesosCifrados.some((x) => x.id === c.id) ? s.accesosCifrados.map((x) => (x.id === c.id ? c : x)) : [...s.accesosCifrados, c] })),
         eliminarAccesoCifrado: (id) => set((s) => ({ accesosCifrados: s.accesosCifrados.filter((x) => x.id !== id) })),
-        borrarBoveda: () => set({ bovedaMeta: [], accesosCifrados: [] }),
+        guardarCarpetaCifrada: (c) =>
+          set((s) => ({ carpetasCifradas: s.carpetasCifradas.some((x) => x.id === c.id) ? s.carpetasCifradas.map((x) => (x.id === c.id ? c : x)) : [...s.carpetasCifradas, c] })),
+        eliminarCarpetaCifrada: (id) => set((s) => ({ carpetasCifradas: s.carpetasCifradas.filter((x) => x.id !== id) })),
+        borrarBoveda: () => set({ bovedaMeta: [], accesosCifrados: [], carpetasCifradas: [] }),
         alternarDiaPeriodo: (dia) =>
           set((s) => ({ diasPeriodo: s.diasPeriodo.includes(dia) ? s.diasPeriodo.filter((d) => d !== dia) : [...s.diasPeriodo, dia].sort() })),
         saltarCobro: (id) =>
@@ -420,6 +430,21 @@ export const useNekoStore = create<EstadoNeko>()(
           } else {
             ganar(-premio, `Tarea reabierta: ${tarea.titulo}`);
           }
+        },
+
+        moverTarea: (id, columnaId) => {
+          const cols = normalizarColumnas(get().ajustes.columnasKanban);
+          const destino = cols.find((c) => c.id === columnaId);
+          const tarea = get().tareas.find((t) => t.id === id);
+          if (!destino || !tarea) return;
+          // pasar a la columna final completa la tarea (con sus croquetas); sacarla de ahí la reabre
+          if (destino.final !== tarea.completada) get().alternarTarea(id);
+          set((s) => ({ tareas: s.tareas.map((t) => (t.id === id ? { ...t, columna: destino.final ? t.columna : columnaId } : t)) }));
+        },
+        agregarTareaEnColumna: (titulo, columnaId) => {
+          get().agregarTarea({ titulo, prioridad: "media", etiquetas: [] });
+          const nueva = get().tareas[0];
+          if (nueva) get().moverTarea(nueva.id, columnaId);
         },
 
         eliminarTarea: (id) => set((s) => ({ tareas: s.tareas.filter((t) => t.id !== id) })),
@@ -628,7 +653,7 @@ export const useNekoStore = create<EstadoNeko>()(
     },
     {
       name: "nekotask-v1",
-      version: 10,
+      version: 12,
       migrate: (guardado, version) => {
         const s = guardado as Partial<EstadoNeko>;
         if (version < 2 && s.bebidas) {
@@ -673,6 +698,11 @@ export const useNekoStore = create<EstadoNeko>()(
           s.listas = s.listas?.map((l) => (l.id === "lista-super" || l.id === "lista-gatitas" ? { ...l, conPrecios: l.conPrecios ?? true } : l));
         }
         if (version < 10) { s.bovedaMeta ??= []; s.accesosCifrados ??= []; }
+        if (version < 11 && s.ajustes?.recordatorios?.agua) {
+          // se quitó el apartado de Agua: sin avisos de agua (el historial se conserva)
+          s.ajustes = { ...s.ajustes, recordatorios: { ...s.ajustes.recordatorios, agua: { ...s.ajustes.recordatorios.agua, activo: false } } };
+        }
+        if (version < 12) s.carpetasCifradas ??= [];
         return s as EstadoNeko;
       },
       storage: createJSONStorage(() => almacenamientoSeguro),

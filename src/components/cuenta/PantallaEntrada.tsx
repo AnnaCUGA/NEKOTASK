@@ -21,7 +21,7 @@ export function PantallaEntrada() {
           <Logo tamano={48} />
           <div>
             <h1 className="font-titulo text-2xl font-semibold">NekoTask Studio</h1>
-            <p className="text-sm text-white/50">Tus tareas, tu agua y tus hábitos, con tus gatitas.</p>
+            <p className="text-sm text-white/50">Tus tareas, tu dinero y tus hábitos, con tus gatitas.</p>
           </div>
         </div>
 

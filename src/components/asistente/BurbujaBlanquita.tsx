@@ -28,13 +28,12 @@ function leer(): Posicion {
 function frase(): string {
   const s = useNekoStore.getState();
   const pendientesHoy = s.tareas.filter((t) => !t.completada && t.fechaLimite && esHoy(t.fechaLimite)).length;
-  const agua = s.registroBebidas.filter((r) => esHoy(r.en)).reduce((a, r) => a + (r.ml * r.porcentaje) / 100, 0);
   const opciones = [
     "¿Te ayudo con algo?",
     "Puedo redactarte un correo",
     "¿Hacemos un plan para hoy?",
     pendientesHoy ? `Tienes ${pendientesHoy} tarea${pendientesHoy > 1 ? "s" : ""} hoy, ¿las desglosamos?` : "¿Organizamos tu semana?",
-    agua < s.ajustes.metaAguaMl / 2 ? "Psst… ¿ya tomaste agua?" : "¡Vas bien con el agua!",
+    "¿Te ayudo a redactar algo?",
   ];
   return opciones[Math.floor(Math.random() * opciones.length)];
 }

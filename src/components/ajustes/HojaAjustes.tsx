@@ -124,7 +124,7 @@ function SeccionNotificaciones() {
           ? "Activas: te llegan avisos aunque la app esté cerrada."
           : permiso === "granted"
             ? sesion ? "Tienes permiso, falta registrar este dispositivo." : "Avisos solo mientras la app está abierta. Inicia sesión para recibirlos con la app cerrada."
-            : permiso === "denied" ? "Las bloqueaste. Actívalas en los ajustes del navegador para esta página." : "Las gatitas pueden avisarte del agua, tus rutinas, tareas y citas."}
+            : permiso === "denied" ? "Las bloqueaste. Actívalas en los ajustes del navegador para esta página." : "Las gatitas pueden avisarte de tus rutinas, tareas, fechas, cobros y citas."}
       </p>
       <div className="flex gap-2">
         {pushActivo ? (
@@ -169,28 +169,12 @@ function Hora({ id, valor, alCambiar, etiqueta }: { id: string; valor: string; a
 function SeccionRecordatorios() {
   const r = useNekoStore((s) => s.ajustes.recordatorios);
   const ajustar = useNekoStore((s) => s.actualizarAjustes);
-  const cambiar = <K extends "agua" | "rutinas" | "tareas" | "gatitas">(k: K, v: Partial<ConfigRecordatorios[K]>) =>
+  const cambiar = <K extends "rutinas" | "tareas" | "gatitas">(k: K, v: Partial<ConfigRecordatorios[K]>) =>
     ajustar({ recordatorios: { ...r, [k]: { ...r[k], ...v } } });
   const fechas = r.fechas ?? { activo: true, hora: "09:00" };
   const dinero = r.dinero ?? { activo: true, hora: "10:00" };
   return (
     <Bloque titulo="Recordatorios" icono="reloj">
-      <div className="space-y-2 border-b border-noche-600 pb-3">
-        <Interruptor id="rec-agua" etiqueta="Agua (Blanquita)" activo={r.agua.activo} alCambiar={(v) => cambiar("agua", { activo: v })} />
-        {r.agua.activo && (
-          <>
-            <p className="pl-1 text-xs text-white/45">Solo te avisa si vas atrasada con tu meta.</p>
-            <label htmlFor="rec-agua-cada" className="flex items-center justify-between gap-3 pl-1 text-white/60">Cada
-              <select id="rec-agua-cada" value={r.agua.cadaMin} onChange={(e) => cambiar("agua", { cadaMin: +e.target.value })}
-                className="rounded-lg border border-noche-600 bg-noche-800 px-2 py-1 text-white [color-scheme:dark]">
-                {[45, 60, 90, 120, 180].map((m) => <option key={m} value={m}>{m >= 60 ? `${m / 60} h` : `${m} min`}</option>)}
-              </select>
-            </label>
-            <Hora id="rec-agua-desde" etiqueta="Desde" valor={r.agua.desde} alCambiar={(v) => cambiar("agua", { desde: v })} />
-            <Hora id="rec-agua-hasta" etiqueta="Hasta" valor={r.agua.hasta} alCambiar={(v) => cambiar("agua", { hasta: v })} />
-          </>
-        )}
-      </div>
       <div className="space-y-2 border-b border-noche-600 pb-3">
         <Interruptor id="rec-rutinas" etiqueta="Rutinas (Ronro)" activo={r.rutinas.activo} alCambiar={(v) => cambiar("rutinas", { activo: v })} />
         {r.rutinas.activo && (
@@ -237,7 +221,7 @@ function SeccionInstalar() {
   return (
     <Bloque titulo="App en tu celular" icono="casa">
       {instalada ? (
-        <p>Ya la tienes instalada. Mantén presionado su ícono para los accesos directos: agua, nueva tarea, Blanquita y calendario.</p>
+        <p>Ya la tienes instalada. Mantén presionado su ícono para los accesos directos: nueva tarea, Blanquita y calendario.</p>
       ) : instalable ? (
         <button type="button" onClick={() => void instalarApp()} className="w-full rounded-xl bg-gradient-to-r from-violeta to-rosa py-2.5 font-semibold text-noche">
           Instalar NekoTask

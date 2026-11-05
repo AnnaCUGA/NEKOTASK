@@ -8,8 +8,8 @@ import { IconoNeko } from "@/components/iconos/IconoNeko";
 import { BotonIcono } from "@/components/ui/Panel";
 import { Hoja, campo } from "@/components/ui/Hoja";
 import {
-  abrirConContrasena, cambiarContrasena, cifrarAcceso, crearBoveda, descifrarAcceso, fuerza, generarContrasena, generarFrase, llaveAES, llaveCorrecta,
-  type Acceso, type Bytes, type NivelFuerza,
+  abrirConContrasena, cambiarContrasena, cifrarAcceso, cifrarCarpeta, crearBoveda, descifrarAcceso, descifrarCarpeta, fuerza, generarContrasena, generarFrase, llaveAES, llaveCorrecta,
+  type Acceso, type Bytes, type Carpeta, type NivelFuerza,
 } from "@/lib/boveda/cripto";
 import { abrirConHuella, huellaRegistrada, olvidarHuella, puedeUsarHuella, registrarHuella } from "@/lib/boveda/huella";
 import { uid } from "@/lib/fechas";
@@ -34,6 +34,8 @@ async function copiarSeguro(texto: string) {
 export function SeccionAccesos() {
   const meta = useNekoStore((s) => s.bovedaMeta[0]);
   const cifrados = useNekoStore((s) => s.accesosCifrados);
+  const carpetasCifradas = useNekoStore((s) => s.carpetasCifradas);
+  const [carpetas, setCarpetas] = useState<Carpeta[]>([]);
   const crudo = useRef<Bytes | null>(null);
   const [llave, setLlave] = useState<CryptoKey | null>(null);
   const [accesos, setAccesos] = useState<Acceso[]>([]);
@@ -53,6 +55,7 @@ export function SeccionAccesos() {
     crudo.current = null;
     setLlave(null);
     setAccesos([]);
+    setCarpetas([]);
   }, []);
 
   const abrir = useCallback(async (c: Bytes) => {
@@ -69,6 +72,14 @@ export function SeccionAccesos() {
     });
     return () => { vivo = false; };
   }, [llave, cifrados]);
+  useEffect(() => {
+    if (!llave) return;
+    let vivo = true;
+    void Promise.all(carpetasCifradas.map((c) => descifrarCarpeta(llave, c))).then((xs) => {
+      if (vivo) setCarpetas(xs.filter((x): x is Carpeta => !!x).sort((a, b) => a.nombre.localeCompare(b.nombre, "es")));
+    });
+    return () => { vivo = false; };
+  }, [llave, carpetasCifradas]);
 
   // se cierra sola: 2 minutos sin tocar nada, o al salir de la app
   useEffect(() => {
@@ -106,6 +117,7 @@ export function SeccionAccesos() {
     <BovedaAbierta
       llave={llave}
       accesos={accesos}
+      carpetas={carpetas}
       huella={huella}
       huellaDisponible={huellaDisponible}
       confirmar={confirmar}
@@ -296,8 +308,8 @@ function Bloqueada({ meta, huella, alAbrir, alOlvidarHuella }: {
 }
 
 // ─── Abierta ────────────────────────────────────────────────────────────
-function BovedaAbierta({ llave, accesos, huella, huellaDisponible, confirmar, alCerrar, alActivarHuella, alQuitarHuella, crudo }: {
-  llave: CryptoKey; accesos: Acceso[]; huella: boolean; huellaDisponible: boolean;
+function BovedaAbierta({ llave, accesos, carpetas, huella, huellaDisponible, confirmar, alCerrar, alActivarHuella, alQuitarHuella, crudo }: {
+  llave: CryptoKey; accesos: Acceso[]; carpetas: Carpeta[]; huella: boolean; huellaDisponible: boolean;
   confirmar: () => Promise<boolean>; alCerrar: () => void;
   alActivarHuella: () => Promise<string | null>; alQuitarHuella: () => void;
   crudo: React.MutableRefObject<Bytes | null>;
@@ -308,6 +320,10 @@ function BovedaAbierta({ llave, accesos, huella, huellaDisponible, confirmar, al
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
   const [visibles, setVisibles] = useState<Set<string>>(new Set());
+  const [carpeta, setCarpeta] = useState<string | null>(null); // null = todas, "" = sin carpeta
+  const [editarCarpeta, setEditarCarpeta] = useState<Carpeta | "nueva" | null>(null);
+  const existe = (id?: string) => !!id && carpetas.some((c) => c.id === id);
+  useEffect(() => { if (carpeta && !carpetas.some((c) => c.id === carpeta)) setCarpeta(null); }, [carpetas, carpeta]);
 
   useEffect(() => { if (!aviso) return; const t = window.setTimeout(() => setAviso(""), 2600); return () => clearTimeout(t); }, [aviso]);
 
@@ -318,8 +334,13 @@ function BovedaAbierta({ llave, accesos, huella, huellaDisponible, confirmar, al
   }, [accesos]);
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    return q ? accesos.filter((a) => `${a.nombre} ${a.usuario} ${a.url} ${a.descripcion}`.toLowerCase().includes(q)) : accesos;
-  }, [accesos, busqueda]);
+    return accesos
+      .filter((a) => carpeta === null || (carpeta === "" ? !existe(a.carpetaId) : a.carpetaId === carpeta))
+      .filter((a) => !q || `${a.nombre} ${a.usuario} ${a.url} ${a.descripcion}`.toLowerCase().includes(q));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accesos, busqueda, carpeta, carpetas]);
+  const cuantos = (id: string) => accesos.filter((a) => a.carpetaId === id).length;
+  const sinCarpeta = accesos.filter((a) => !existe(a.carpetaId)).length;
   const debiles = accesos.filter((a) => a.contrasena && fuerza(a.contrasena).nivel === "debil").length;
 
   const copiar = async (texto: string, que: string, pideHuella: boolean) => {
@@ -365,6 +386,29 @@ function BovedaAbierta({ llave, accesos, huella, huellaDisponible, confirmar, al
         </button>
       </div>
 
+      <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:px-0">
+        <div className="flex w-max gap-1.5">
+          {([[null, "Todas", accesos.length, "#a78bfa"], ...carpetas.map((c) => [c.id, c.nombre, cuantos(c.id), c.color] as const), ...(carpetas.length && sinCarpeta ? [["", "Sin carpeta", sinCarpeta, "#8b86a3"] as const] : [])] as const).map(([id, nombre, n, color]) => {
+            const activa = carpeta === id;
+            const deCarpeta = typeof id === "string" && id !== "";
+            return (
+              <button key={id ?? "todas"} type="button" onClick={() => (activa && deCarpeta ? setEditarCarpeta(carpetas.find((c) => c.id === id)!) : setCarpeta(id))}
+                aria-pressed={activa} title={activa && deCarpeta ? "Toca otra vez para editarla" : undefined}
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${activa ? "bg-noche-700 text-white" : "border-noche-600 bg-noche-800/80 text-white/60"}`}
+                style={activa ? { borderColor: color } : undefined}>
+                {deCarpeta ? <span style={{ color }}><IconoNeko nombre="carpeta" tamano={14} /></span> : null}
+                {nombre} <span className="tabular-nums text-white/40">{n}</span>
+                {activa && deCarpeta && <IconoNeko nombre="lapiz" tamano={12} className="text-white/50" />}
+              </button>
+            );
+          })}
+          <button type="button" onClick={() => setEditarCarpeta("nueva")}
+            className="flex items-center gap-1 rounded-full border border-dashed border-noche-600 px-3 py-1.5 text-xs font-semibold text-white/50 hover:text-white">
+            <IconoNeko nombre="mas" tamano={13} /> Carpeta
+          </button>
+        </div>
+      </div>
+
       {(debiles > 0 || repetidas.size > 0) && (
         <p className="flex items-center gap-2 rounded-xl border border-noche-600 bg-noche-800/80 px-3 py-2 text-xs text-white/65">
           <IconoNeko nombre="escudo" tamano={15} className="shrink-0 text-croqueta" />
@@ -391,7 +435,10 @@ function BovedaAbierta({ llave, accesos, huella, huellaDisponible, confirmar, al
                     <Inicial nombre={a.nombre} color="#a78bfa" tamano={40} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-white/90">{a.nombre}</span>
-                      <span className="block truncate text-xs text-white/50">{a.usuario || a.descripcion || "Sin usuario"}</span>
+                      <span className="flex items-center gap-1.5 truncate text-xs text-white/50">
+                        {carpeta === null && existe(a.carpetaId) && (() => { const c = carpetas.find((x) => x.id === a.carpetaId)!; return <span className="flex shrink-0 items-center gap-0.5" style={{ color: c.color }}><IconoNeko nombre="carpeta" tamano={11} />{c.nombre} ·</span>; })()}
+                        <span className="truncate">{a.usuario || a.descripcion || "Sin usuario"}</span>
+                      </span>
                     </span>
                   </button>
                   {a.usuario && <BotonIcono icono="copiar" etiqueta={`Copiar usuario de ${a.nombre}`} tamano={16} onClick={() => void copiar(a.usuario, "Usuario", false)} />}
@@ -413,7 +460,13 @@ function BovedaAbierta({ llave, accesos, huella, huellaDisponible, confirmar, al
       <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-[11px] text-white/35"><IconoNeko nombre="reloj" tamano={12} /> Se cierra sola a los 2 minutos sin uso o al salir de la app.</p>
 
       <AnimatePresence>
-        {editar && <EditorAcceso llave={llave} acceso={editar === "nuevo" ? null : editar} confirmar={confirmar} alCerrar={() => setEditar(null)} alAviso={setAviso} />}
+        {editar && <EditorAcceso llave={llave} acceso={editar === "nuevo" ? null : editar} carpetas={carpetas} carpetaInicial={carpeta || undefined} confirmar={confirmar} alCerrar={() => setEditar(null)} alAviso={setAviso} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {editarCarpeta && (
+          <EditorCarpeta llave={llave} carpeta={editarCarpeta === "nueva" ? null : editarCarpeta} cuantos={editarCarpeta === "nueva" ? 0 : cuantos(editarCarpeta.id)}
+            accesos={accesos} alCerrar={(id) => { setEditarCarpeta(null); if (id !== undefined) setCarpeta(id); }} alAviso={setAviso} />
+        )}
       </AnimatePresence>
       <AnimatePresence>
         {generador && (
@@ -506,8 +559,9 @@ function Generador({ alUsar, textoUsar }: { alUsar: (c: string) => void; textoUs
 }
 
 // ─── Editor ─────────────────────────────────────────────────────────────
-function EditorAcceso({ llave, acceso, confirmar, alCerrar, alAviso }: {
-  llave: CryptoKey; acceso: Acceso | null; confirmar: () => Promise<boolean>; alCerrar: () => void; alAviso: (t: string) => void;
+function EditorAcceso({ llave, acceso, carpetas, carpetaInicial, confirmar, alCerrar, alAviso }: {
+  llave: CryptoKey; acceso: Acceso | null; carpetas: Carpeta[]; carpetaInicial?: string;
+  confirmar: () => Promise<boolean>; alCerrar: () => void; alAviso: (t: string) => void;
 }) {
   const guardar = useNekoStore((s) => s.guardarAccesoCifrado);
   const eliminar = useNekoStore((s) => s.eliminarAccesoCifrado);
@@ -516,6 +570,7 @@ function EditorAcceso({ llave, acceso, confirmar, alCerrar, alAviso }: {
   const [contrasena, setContrasena] = useState(acceso?.contrasena ?? "");
   const [url, setUrl] = useState(acceso?.url ?? "");
   const [descripcion, setDescripcion] = useState(acceso?.descripcion ?? "");
+  const [carpetaId, setCarpetaId] = useState(acceso ? (carpetas.some((c) => c.id === acceso.carpetaId) ? acceso.carpetaId ?? "" : "") : carpetaInicial ?? "");
   const [ver, setVer] = useState(!acceso);
   const [generando, setGenerando] = useState(false);
   const [confirmarBorrar, setConfirmarBorrar] = useState(false);
@@ -542,6 +597,7 @@ function EditorAcceso({ llave, acceso, confirmar, alCerrar, alAviso }: {
     const a: Acceso = {
       id: acceso?.id ?? uid(),
       nombre: nombre.trim(), usuario: usuario.trim(), contrasena, url: url.trim(), descripcion: descripcion.trim(),
+      ...(carpetaId ? { carpetaId } : {}),
       creadoEn: acceso?.creadoEn ?? ahora, actualizadoEn: ahora,
     };
     guardar(await cifrarAcceso(llave, a));
@@ -565,6 +621,20 @@ function EditorAcceso({ llave, acceso, confirmar, alCerrar, alAviso }: {
           <span className="mb-1 block text-xs font-semibold text-white/55">¿De qué es?</span>
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Netflix, banco, correo personal…" className={campo} autoFocus={!acceso} />
         </label>
+        {carpetas.length > 0 && (
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-white/55">Carpeta</span>
+            <div className="flex flex-wrap gap-1.5">
+              {[{ id: "", nombre: "Ninguna", color: "#8b86a3" }, ...carpetas].map((c) => (
+                <button key={c.id || "ninguna"} type="button" onClick={() => setCarpetaId(c.id)} aria-pressed={carpetaId === c.id}
+                  className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${carpetaId === c.id ? "bg-noche-700 text-white" : "border-noche-600 text-white/55"}`}
+                  style={carpetaId === c.id ? { borderColor: c.color } : undefined}>
+                  {c.id && <span style={{ color: c.color }}><IconoNeko nombre="carpeta" tamano={13} /></span>} {c.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <label className="block">
           <span className="mb-1 block text-xs font-semibold text-white/55">Usuario o correo</span>
           <span className="flex gap-1.5">
@@ -688,6 +758,74 @@ function AjustesBoveda({ crudo, huella, huellaDisponible, total, alActivarHuella
           </div>
         </section>
       </div>
+    </Hoja>
+  );
+}
+
+// ─── Carpetas ───────────────────────────────────────────────────────────
+const COLORES_CARPETA = ["#a78bfa", "#f472b6", "#67e8f9", "#fbbf24", "#9cc96b", "#fb923c", "#e5e7eb"];
+
+function EditorCarpeta({ llave, carpeta, cuantos, accesos, alCerrar, alAviso }: {
+  llave: CryptoKey; carpeta: Carpeta | null; cuantos: number; accesos: Acceso[];
+  alCerrar: (idElegida?: string | null) => void; alAviso: (t: string) => void;
+}) {
+  const guardar = useNekoStore((s) => s.guardarCarpetaCifrada);
+  const eliminar = useNekoStore((s) => s.eliminarCarpetaCifrada);
+  const guardarAcceso = useNekoStore((s) => s.guardarAccesoCifrado);
+  const [nombre, setNombre] = useState(carpeta?.nombre ?? "");
+  const [color, setColor] = useState(carpeta?.color ?? COLORES_CARPETA[0]);
+  const [confirmar, setConfirmar] = useState(false);
+
+  const enviar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim()) return;
+    const c: Carpeta = { id: carpeta?.id ?? uid(), nombre: nombre.trim(), color, actualizadoEn: new Date().toISOString() };
+    guardar(await cifrarCarpeta(llave, c));
+    alAviso(carpeta ? "Carpeta guardada" : "Carpeta creada");
+    alCerrar(c.id);
+  };
+  const borrar = async () => {
+    if (!carpeta) return;
+    if (!confirmar) return setConfirmar(true);
+    // sus accesos no se borran: se quedan sin carpeta
+    const ahora = new Date().toISOString();
+    for (const a of accesos.filter((x) => x.carpetaId === carpeta.id)) {
+      const { carpetaId: _, ...resto } = a;
+      guardarAcceso(await cifrarAcceso(llave, { ...resto, actualizadoEn: ahora }));
+    }
+    eliminar(carpeta.id);
+    alAviso("Carpeta borrada");
+    alCerrar(null);
+  };
+
+  return (
+    <Hoja alCerrar={() => alCerrar()}>
+      <form onSubmit={enviar} className="space-y-3" autoComplete="off">
+        <div className="flex items-center gap-2">
+          <span className="grid h-10 w-10 place-items-center rounded-xl" style={{ background: `${color}26`, color }}><IconoNeko nombre="carpeta" tamano={22} /></span>
+          <p className="flex-1 font-titulo text-lg font-semibold">{carpeta ? "Editar carpeta" : "Nueva carpeta"}</p>
+          <BotonIcono icono="cerrar" etiqueta="Cerrar" onClick={() => alCerrar()} />
+        </div>
+        <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Bancos, streaming, escuela, gatitas…" aria-label="Nombre de la carpeta" className={campo} autoFocus />
+        <div className="flex flex-wrap gap-2">
+          {COLORES_CARPETA.map((c) => (
+            <button key={c} type="button" onClick={() => setColor(c)} aria-label={`Color ${c}`} aria-pressed={color === c}
+              className={`h-8 w-8 rounded-full ${color === c ? "ring-2 ring-white ring-offset-2 ring-offset-noche-800" : ""}`} style={{ background: c }} />
+          ))}
+        </div>
+        <div className="flex gap-2 pt-1">
+          {carpeta && (
+            <button type="button" onClick={() => void borrar()}
+              className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${confirmar ? "border-rosa bg-rosa/15 text-rosa" : "border-noche-600 text-white/60"}`}>
+              {confirmar ? (cuantos ? `Sí (sus ${cuantos} quedan sin carpeta)` : "Sí, borrar") : "Borrar"}
+            </button>
+          )}
+          <button type="submit" disabled={!nombre.trim()} className="flex-1 rounded-xl bg-violeta py-2.5 font-titulo font-semibold text-noche disabled:opacity-40">
+            {carpeta ? "Guardar" : "Crear carpeta"}
+          </button>
+        </div>
+        <p className="text-center text-[11px] text-white/40">El nombre de la carpeta también va cifrado.</p>
+      </form>
     </Hoja>
   );
 }

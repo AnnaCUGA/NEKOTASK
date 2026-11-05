@@ -17,7 +17,6 @@ import { useNekoStore } from "@/store/useNekoStore";
 import { Encabezado } from "./Encabezado";
 import { PanelGatitas, PanelTienda } from "./PanelGatitas";
 import { PanelHabitos } from "./PanelHabitos";
-import { PanelHidratacion } from "./PanelHidratacion";
 import { FormTarea, PanelTareas } from "./PanelTareas";
 import { PanelPomodoro, PanelTiempoLibre } from "./PanelTiempo";
 import { SeccionAsistente } from "@/components/asistente/SeccionAsistente";
@@ -27,6 +26,7 @@ import { Gatita } from "@/components/gatitas/Gatita";
 import { SeccionNotas } from "@/components/organizar/SeccionNotas";
 import { SeccionListas } from "@/components/organizar/SeccionListas";
 import { SeccionAccesos } from "@/components/organizar/SeccionAccesos";
+import { SeccionTareas } from "./SeccionTareas";
 import { ProximasFechas, SeccionFechas } from "@/components/organizar/SeccionFechas";
 import { SeccionCiclo } from "@/components/bienestar/SeccionCiclo";
 import { AnfitrionDinero, useUIDinero } from "@/components/dinero/HojaMovimiento";
@@ -35,7 +35,7 @@ import { Movimientos, Presupuesto, Suscripciones } from "@/components/dinero/Ges
 
 export type Pantalla =
   | "hoy" | "tareas" | "calendario" | "notas" | "listas" | "fechas" | "accesos"
-  | "habitos" | "agua" | "ciclo" | "dinero" | "movimientos" | "presupuesto" | "suscripciones" | "gatitas" | "asistente";
+  | "habitos" | "ciclo" | "dinero" | "movimientos" | "presupuesto" | "suscripciones" | "gatitas" | "asistente";
 type Grupo = "hoy" | "organizar" | "bienestar" | "dinero" | "gatitas";
 
 const PANTALLAS: Record<Pantalla, { nombre: string; icono: NombreIcono; grupo: Grupo | null }> = {
@@ -47,7 +47,6 @@ const PANTALLAS: Record<Pantalla, { nombre: string; icono: NombreIcono; grupo: G
   fechas: { nombre: "Fechas", icono: "regalo", grupo: "organizar" },
   accesos: { nombre: "Accesos", icono: "candado", grupo: "organizar" },
   habitos: { nombre: "Hábitos", icono: "racha", grupo: "bienestar" },
-  agua: { nombre: "Agua", icono: "agua", grupo: "bienestar" },
   ciclo: { nombre: "Ciclo", icono: "flor", grupo: "bienestar" },
   dinero: { nombre: "Resumen", icono: "grafica", grupo: "dinero" },
   movimientos: { nombre: "Movimientos", icono: "lista", grupo: "dinero" },
@@ -60,7 +59,7 @@ const PANTALLAS: Record<Pantalla, { nombre: string; icono: NombreIcono; grupo: G
 const GRUPOS: { id: Grupo; nombre: string; icono: NombreIcono; pantallas: Pantalla[] }[] = [
   { id: "hoy", nombre: "Hoy", icono: "casa", pantallas: ["hoy"] },
   { id: "organizar", nombre: "Organizar", icono: "carpeta", pantallas: ["tareas", "calendario", "notas", "listas", "fechas", "accesos"] },
-  { id: "bienestar", nombre: "Bienestar", icono: "bienestar", pantallas: ["habitos", "agua", "ciclo"] },
+  { id: "bienestar", nombre: "Bienestar", icono: "bienestar", pantallas: ["habitos", "ciclo"] },
   { id: "dinero", nombre: "Dinero", icono: "dinero", pantallas: ["dinero", "movimientos", "presupuesto", "suscripciones"] },
   { id: "gatitas", nombre: "Gatitas", icono: "huella", pantallas: ["gatitas"] },
 ];
@@ -94,17 +93,12 @@ export function Dashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  /** Abre una sección o ejecuta un acceso directo: /?seccion=…, /?accion=agua&ml=250, /?accion=tarea */
+  /** Abre una sección o ejecuta un acceso directo: /?seccion=…, /?accion=tarea, /?accion=gasto */
   const navegar = useCallback((url: string) => {
     const u = new URL(url, window.location.origin);
     const sec = u.searchParams.get("seccion") ?? u.hash.slice(1);
     if (esPantalla(sec)) irA(sec);
     const accion = u.searchParams.get("accion");
-    if (accion === "agua") {
-      const ml = Math.min(1000, Math.max(50, parseInt(u.searchParams.get("ml") ?? "250", 10) || 250));
-      useNekoStore.getState().registrarBebida("agua", ml);
-      irA("hoy");
-    }
     if (accion === "tarea") setCapturaAbierta(true);
     if (accion === "gasto") useUIDinero.getState().abrir("gasto");
   }, [irA]);
@@ -180,7 +174,6 @@ function Contenido({ pantalla, irA }: { pantalla: Pantalla; irA: (p: Pantalla) =
             <div className="hidden min-w-0 space-y-4 lg:col-span-5 lg:block 2xl:col-span-4"><PanelTareas /></div>
             <div className="min-w-0 space-y-4 lg:col-span-7 2xl:col-span-4">
               <ProximasFechas alVerTodas={() => irA("fechas")} />
-              <PanelHidratacion />
               <PanelTiempoLibre />
               <PanelPomodoro />
             </div>
@@ -188,14 +181,13 @@ function Contenido({ pantalla, irA }: { pantalla: Pantalla; irA: (p: Pantalla) =
           </div>
         </div>
       );
-    case "tareas": return <div className="mx-auto max-w-3xl"><PanelTareas /></div>;
+    case "tareas": return <SeccionTareas />;
     case "calendario": return <SeccionCalendario />;
     case "notas": return <SeccionNotas />;
     case "listas": return <SeccionListas />;
     case "fechas": return <SeccionFechas />;
     case "accesos": return <SeccionAccesos />;
     case "habitos": return <div className="mx-auto max-w-3xl"><PanelHabitos /></div>;
-    case "agua": return <div className="mx-auto max-w-3xl"><PanelHidratacion /></div>;
     case "ciclo": return <SeccionCiclo />;
     case "dinero": return <ResumenDinero alVer={irA} />;
     case "movimientos": return <Movimientos />;
@@ -294,10 +286,8 @@ function NavegacionMovil({ grupo, alCambiar }: { grupo: Grupo | null; alCambiar:
   );
 }
 
-/** Botón flotante: tarea rápida o un vaso de agua en un toque (lo mismo hará el widget). */
+/** Botón flotante: tarea o gasto rápido (lo mismo hará el widget). */
 function CapturaRapida({ abierto, alCambiar: setAbierto }: { abierto: boolean; alCambiar: (v: boolean | ((x: boolean) => boolean)) => void }) {
-  const registrar = useNekoStore((s) => s.registrarBebida);
-  const bebidas = useNekoStore((s) => s.bebidas);
 
   return (
     <>
@@ -321,16 +311,6 @@ function CapturaRapida({ abierto, alCambiar: setAbierto }: { abierto: boolean; a
               className="fixed inset-x-3 bottom-[160px] z-40 mx-auto max-w-md rounded-[22px] border border-noche-600 bg-noche-800 p-4 shadow-neon lg:bottom-28 lg:right-8 lg:left-auto lg:w-[400px]"
             >
               <p className="mb-2 font-titulo text-lg font-semibold">Captura rápida</p>
-              <div className="mb-3 flex flex-wrap gap-1.5">
-                {bebidas.filter((b) => !b.oculta).slice(0, 3).map((b) => (
-                  <button key={b.id} type="button"
-                    onClick={(e) => { registrar(b.id, b.tamanosMl[0]); confetiDesde(e.currentTarget, b.color); }}
-                    className="flex items-center gap-1.5 rounded-xl border border-noche-600 bg-noche-700 px-3 py-2 text-sm font-semibold"
-                    style={{ color: b.color }}>
-                    <IconoNeko nombre={b.icono} tamano={17} /> +{b.tamanosMl[0]} {b.nombre.toLowerCase()}
-                  </button>
-                ))}
-              </div>
               <button type="button" onClick={() => { setAbierto(false); useUIDinero.getState().abrir("gasto"); }}
                 className="mb-3 flex w-full items-center gap-2 rounded-xl border border-noche-600 bg-noche-700 px-3 py-2 text-sm font-semibold text-rosa">
                 <IconoNeko nombre="gasto" tamano={17} /> Anotar un gasto

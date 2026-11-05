@@ -198,7 +198,7 @@ export function PanelTienda() {
         <summary className="cursor-pointer select-none text-white/60">Cómo gano croquetas</summary>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <Chip color="#a78bfa">Tarea 3–10</Chip><Chip color="#f9a8d4">Hábito 3</Chip><Chip color="#e8a85b">Rutina completa +5</Chip>
-          <Chip color="#67e8f9">Bebida 1 (máx. 10/día)</Chip><Chip color="#67e8f9">Meta de agua +10</Chip><Chip color="#9cc96b">Pomodoro 4</Chip><Chip color="#f472b6">Cuidar gatitas 2</Chip>
+          <Chip color="#9cc96b">Pomodoro 4</Chip><Chip color="#f472b6">Cuidar gatitas 2</Chip>
         </div>
         <ul className="mt-2 space-y-0.5">
           {movimientos.slice(0, 6).map((m) => (

@@ -37,7 +37,6 @@ export function contextoDeLaApp() {
     .map((e) => `- ${formatoHora(e.inicio)}–${formatoHora(e.fin)} ${e.titulo}`);
   const libre = calcularTiempoLibre(Date.now(), s.ajustes.horaInicioDia, s.ajustes.horaFinDia, s.eventosCalendario.filter((e) => !e.todoElDia), s.tareas);
   const habitos = s.habitos.filter((h) => tocaHoy(h) && !hechoHoy(h.id, s.registroHabitos)).map((h) => h.nombre);
-  const agua = Math.round(mlEfectivosHoy(s.registroBebidas));
   const mes = hoyISO().slice(0, 7);
   const dinero = resumenMes(s.transacciones, s.categoriasDinero, mes);
   const topGastos = dinero.porCategoria.slice(0, 5).map((c) => `${c.categoria.nombre} ${pesos(c.total, true)}${c.presupuesto ? ` de ${pesos(c.presupuesto, true)}` : ""}`);
@@ -48,7 +47,6 @@ export function contextoDeLaApp() {
     `Calendario de hoy:\n${eventos.join("\n") || "- (sin eventos)"}`,
     `Tareas pendientes:\n${pendientes.join("\n") || "- (ninguna)"}`,
     `Hábitos sin marcar hoy: ${habitos.join(", ") || "ninguno"}.`,
-    `Hidratación: ${agua} de ${s.ajustes.metaAguaMl} ml.`,
     `Dinero este mes (MXN): gastos ${pesos(dinero.gastos, true)}, ingresos ${pesos(dinero.ingresos, true)}. Por categoría: ${topGastos.join(", ") || "sin gastos aún"}. Suscripciones activas: ${subs.map((x) => `${x.nombre} ${pesos(x.monto, true)} ${ETIQUETA_FRECUENCIA[x.frecuencia]}`).join(", ") || "ninguna"}.`,
   ].join("\n");
 }

@@ -16,7 +16,7 @@ export const COLOR_PRIORIDAD: Record<Prioridad, string> = {
   alta: "#f472b6",
   urgente: "#fb7185",
 };
-const PESO: Record<Prioridad, number> = { urgente: 0, alta: 1, media: 2, baja: 3 };
+export const PESO: Record<Prioridad, number> = { urgente: 0, alta: 1, media: 2, baja: 3 };
 
 type Filtro = "hoy" | "todas" | "hechas";
 
@@ -85,7 +85,7 @@ export function PanelTareas() {
   );
 }
 
-function ItemTarea({ tarea }: { tarea: Tarea }) {
+export function ItemTarea({ tarea }: { tarea: Tarea }) {
   const alternar = useNekoStore((s) => s.alternarTarea);
   const eliminar = useNekoStore((s) => s.eliminarTarea);
   const alternarItem = useNekoStore((s) => s.alternarChecklist);

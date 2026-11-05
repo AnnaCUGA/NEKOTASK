@@ -1,7 +1,7 @@
 import type { Ajustes, CategoriaDinero, ConfigRecordatorios, EventoCalendario, Gatita, Habito, Lista, Tarea, TipoBebida } from "@/lib/tipos";
 
 export const RECORDATORIOS_INICIALES: ConfigRecordatorios = {
-  agua: { activo: true, cadaMin: 90, desde: "09:00", hasta: "21:00" },
+  agua: { activo: false, cadaMin: 90, desde: "09:00", hasta: "21:00" },
   rutinas: { activo: true, manana: "08:00", noche: "22:00" },
   tareas: { activo: true, minutosAntes: 15 },
   gatitas: { activo: true, hora: "09:00" },

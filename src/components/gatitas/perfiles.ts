@@ -31,7 +31,7 @@ export const PERFILES: Record<ClaveGatita, PerfilVisual> = {
     clave: "blanquita",
     nombre: "Blanquita",
     rol: "agua",
-    descripcionRol: "Guardiana del agua",
+    descripcionRol: "Tu asistente",
     pelaje: "#f7f3ef",
     sombra: "#e3dcd6",
     ojos: "#7fb8e6",

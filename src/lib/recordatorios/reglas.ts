@@ -54,30 +54,6 @@ export function calcularRecordatorios(d: DatosRecordatorio, ahora: Date, zona: s
   const { dia, minutos, diaSemana } = relojEn(ahora, zona);
   const lista: Recordatorio[] = [];
 
-  // ── Agua: solo si vas atrasada respecto a tu meta ─────────────────────
-  if (r.agua.activo) {
-    const ini = aMin(r.agua.desde);
-    const fin = aMin(r.agua.hasta);
-    if (minutos >= ini && minutos <= fin && fin > ini) {
-      const deHoy = d.registroBebidas.filter((b) => relojEn(new Date(b.en), zona).dia === dia);
-      const tomado = deHoy.reduce((s, b) => s + (b.ml * b.porcentaje) / 100, 0);
-      const esperado = (d.metaAguaMl * (minutos - ini)) / (fin - ini);
-      const ultima = deHoy.reduce((m, b) => Math.max(m, +new Date(b.en)), 0);
-      const minDesdeUltima = ultima ? (+ahora - ultima) / 60_000 : Infinity;
-      if (tomado < d.metaAguaMl && tomado < esperado - 200 && minDesdeUltima >= r.agua.cadaMin) {
-        const turno = Math.floor((minutos - ini) / r.agua.cadaMin);
-        lista.push({
-          clave: `agua-${dia}-${turno}`,
-          titulo: "Blanquita tiene sed",
-          cuerpo: `Llevas ${Math.round(tomado)} de ${d.metaAguaMl} ml. ¿Un vaso de agua o de jugo?`,
-          gatita: "blanquita",
-          url: "/?accion=agua",
-          acciones: [{ accion: "agua-250", titulo: "+250 ml de agua" }],
-        });
-      }
-    }
-  }
-
   // ── Rutinas de mañana y noche ─────────────────────────────────────────
   if (r.rutinas.activo) {
     const rutinas: [Rutina, string, string][] = [["manana", r.rutinas.manana, "de mañana"], ["noche", r.rutinas.noche, "de noche"]];

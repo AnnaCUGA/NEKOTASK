@@ -175,7 +175,7 @@ export function SeccionAsistente() {
         >
           {info.usaContexto && (
             <p className="mb-2 flex items-center gap-1.5 text-[11px] text-cian-suave/80">
-              <IconoNeko nombre="chispa" tamano={13} /> Blanquita verá tus tareas, tu calendario de hoy, hábitos e hidratación.
+              <IconoNeko nombre="chispa" tamano={13} /> Blanquita verá tus tareas, tu calendario de hoy, hábitos y tu resumen de dinero.
             </p>
           )}
           <div className="flex items-end gap-2 rounded-2xl border border-noche-600 bg-noche-900 p-1.5 focus-within:border-cian/50">

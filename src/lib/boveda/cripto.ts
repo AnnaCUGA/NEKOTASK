@@ -35,9 +35,13 @@ export interface Acceso {
   contrasena: string;
   url: string;
   descripcion: string;
+  carpetaId?: string;
   creadoEn: string;
   actualizadoEn: string;
 }
+
+/** Carpeta para agrupar accesos (también va cifrada: ni su nombre sale del dispositivo) */
+export interface Carpeta { id: string; nombre: string; color: string; actualizadoEn: string }
 
 /** Bytes sobre un ArrayBuffer normal (lo que pide Web Crypto) */
 export type Bytes = Uint8Array<ArrayBuffer>;
@@ -131,6 +135,19 @@ export async function cifrarAcceso(llave: CryptoKey, a: Acceso): Promise<AccesoC
 export async function descifrarAcceso(llave: CryptoKey, c: AccesoCifrado): Promise<Acceso | null> {
   try {
     return JSON.parse(deTexto.decode(await descifrar(llave, c, `neko-acceso:${c.id}`))) as Acceso;
+  } catch {
+    return null;
+  }
+}
+
+export async function cifrarCarpeta(llave: CryptoKey, c: Carpeta): Promise<AccesoCifrado> {
+  const x = await cifrar(llave, texto.encode(JSON.stringify(c)), `neko-carpeta:${c.id}`);
+  return { id: c.id, ...x, actualizadoEn: c.actualizadoEn };
+}
+
+export async function descifrarCarpeta(llave: CryptoKey, c: AccesoCifrado): Promise<Carpeta | null> {
+  try {
+    return JSON.parse(deTexto.decode(await descifrar(llave, c, `neko-carpeta:${c.id}`))) as Carpeta;
   } catch {
     return null;
   }

@@ -24,7 +24,10 @@ export interface Tarea {
   completada: boolean;
   completadaEn?: string;
   creadoEn: string;
+  columna?: string;         // columna del Kanban (si está terminada va a la columna final)
 }
+
+export interface ColumnaKanban { id: string; nombre: string; color: string; final?: boolean }
 
 export interface EntradaTiempo {
   id: string;
@@ -231,6 +234,7 @@ export interface Ajustes {
   claveIa?: string;        // NEKO_CLAVE_ACCESO, si la configuraste en Vercel
   recordatorios: ConfigRecordatorios;
   ciclo?: AjustesCiclo;
+  columnasKanban?: ColumnaKanban[];
 }
 
 export type NombreIcono =
