@@ -1,13 +1,50 @@
+<img src="docs/banner.svg" alt="NekoTask Studio: app personal para organizar tareas, calendario, notas, dinero y hábitos, con cuatro gatitas (Blanquita, Bizca, Mango y Ronro) sobre una ciudad de noche." width="100%">
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 15">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=black" alt="Supabase">
+  <img src="https://img.shields.io/badge/Zustand-443E38?style=for-the-badge" alt="Zustand">
+  <img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA">
+  <img src="https://img.shields.io/badge/Claude_%7C_Gemini-a78bfa?style=for-the-badge" alt="Claude o Gemini">
+</p>
+
 # NekoTask Studio
 
 App personal para organizar tu vida (tareas, calendario, notas, listas, dinero, hábitos, ciclo y contraseñas) con temática kawaii/cyberpunk. La protagonizan **Blanquita, Bizca, Mango y Ronro**, pintadas a partir de sus sprites.
 
-| Gatita | Rol en la app | Reacciona cuando… |
-|---|---|---|
-| Blanquita | **Asistente IA** (burbuja flotante que puedes mover) | le preguntas algo · te da ideas según tu día · es el logo de la app |
-| Bizca | Tareas y fechas importantes | completas una tarea o una lista · te avisa de cumpleaños y fechas |
-| Mango | Pomodoro y dinero | inicias o terminas un Pomodoro · te avisa de cobros y presupuesto · cuida las citas de las gatitas |
-| Ronro | Descanso y bóveda | marcas hábitos · te recuerda tus rutinas · cuida la bóveda de accesos |
+<img src="docs/capturas/hoy.png" alt="Pantalla Hoy en computadora: escena de las cuatro gatitas sobre la ciudad, lista de tareas, tiempo libre del día y Pomodoro con Mango." width="100%">
+
+| | Gatita | Rol en la app | Reacciona cuando… |
+|:---:|---|---|---|
+| <img src="public/iconos/gatitas/blanquita.png" width="56" alt="Blanquita"> | Blanquita | **Asistente IA** (burbuja flotante que puedes mover) | le preguntas algo · te da ideas según tu día · es el logo de la app |
+| <img src="public/iconos/gatitas/bizca.png" width="56" alt="Bizca"> | Bizca | Tareas y fechas importantes | completas una tarea o una lista · te avisa de cumpleaños y fechas |
+| <img src="public/iconos/gatitas/mango.png" width="56" alt="Mango"> | Mango | Pomodoro y dinero | inicias o terminas un Pomodoro · te avisa de cobros y presupuesto · cuida las citas de las gatitas |
+| <img src="public/iconos/gatitas/ronro.png" width="56" alt="Ronro"> | Ronro | Descanso y bóveda | marcas hábitos · te recuerda tus rutinas · cuida la bóveda de accesos |
+
+## Lo más interesante por dentro
+
+| | |
+|---|---|
+| 🔄 **Sincronización entre dispositivos** | Todo vive en una sola tabla de registros; funciona sin internet y sube solo lo que cambió. |
+| 🔐 **Bóveda cifrada en el dispositivo** | PBKDF2 con 600 000 vueltas y AES-GCM; a la nube solo llegan datos cifrados. Se abre con huella (WebAuthn). |
+| 📲 **App instalable** | Service worker, modo sin conexión, atajos, *Compartir con NekoTask* y notificaciones push. |
+| 🤖 **Asistente con contexto** | Blanquita ve tus tareas, calendario y hábitos del día, y responde en streaming con Claude o Gemini. |
+| 🎨 **Sprites propios** | 65 poses por gatita en atlas WebP, generados con scripts de Python a partir de las ilustraciones. |
+
+## Capturas
+
+| Tareas en Kanban | Calendario |
+|:---:|:---:|
+| <img src="docs/capturas/tareas-kanban.png" alt="Tablero Kanban con columnas Por hacer, En progreso, En revisión y Terminada."> | <img src="docs/capturas/calendario.png" alt="Calendario semanal con mini mes y lista de lo que viene."> |
+
+| Gatitas y sala | En el celular |
+|:---:|:---:|
+| <img src="docs/capturas/gatitas.png" alt="Sección Gatitas: cuidados de cada gatita y tienda de cosas para la sala."> | <img src="docs/capturas/movil-hoy.png" width="31%" alt="Pantalla Hoy en celular."> <img src="docs/capturas/movil-organizar.png" width="31%" alt="Tareas en Kanban en celular."> <img src="docs/capturas/movil-gatitas.png" width="31%" alt="Gatitas en celular."> |
+
+Las capturas vienen de la vista previa (`npm run vista-previa`) con los datos de ejemplo.
 
 ---
 
